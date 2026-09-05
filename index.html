@@ -74,7 +74,7 @@
       }
     };
 
-    // ▼ 【重要】画像の下処理（Canvasによる切り抜きと白黒化）を追加 ▼
+    // ▼ 修正：画像を縮小して全体を読み込むように変更 ▼
     async function previewImage(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -87,48 +87,24 @@
         const tempImg = new Image();
         tempImg.onload = async function() {
           
-          // 1. Canvasを準備して、画像の上部だけを切り抜く
+          // Canvasを使って、画像を「横幅500px」に縮小する（処理速度を上げるため）
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
-          // スマホのスクショの上から約8%〜33%の範囲（CPと名前がある場所）を狙う
-          const startY = tempImg.height * 0.08; 
-          const cropHeight = tempImg.height * 0.25;
-          const cropWidth = tempImg.width;
+          const targetWidth = 500;
+          const scale = targetWidth / tempImg.width;
+          canvas.width = targetWidth;
+          canvas.height = tempImg.height * scale;
           
-          canvas.width = cropWidth;
-          canvas.height = cropHeight;
-          ctx.drawImage(tempImg, 0, startY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+          // 切り抜きや白黒化はせず、そのまま全体を描画
+          ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
           
-          // 2. ピクセルデータをいじって「白黒反転（2値化）」にする
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const data = imageData.data;
-          
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i+1];
-            const b = data[i+2];
-            
-            // 明るさを計算
-            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-            
-            // ポケモンGOの文字は白いので、明るい部分(200以上)を「黒(0)」に、それ以外を「白(255)」にする
-            const color = brightness > 200 ? 0 : 255; 
-            
-            data[i] = color;     // Red
-            data[i+1] = color;   // Green
-            data[i+2] = color;   // Blue
-          }
-          ctx.putImageData(imageData, 0, 0);
-          
-          // 下処理が完了した「白黒画像」を画面に表示する
           img.src = canvas.toDataURL('image/jpeg');
           img.style.display = 'block';
           
-          text.innerHTML = "⏳ 白黒化して文字を解析中...<br><small style='font-size:12px; color:#666;'>(通信があるため数秒かかります)</small>";
+          text.innerHTML = "⏳ 全体の文字を解析中...<br><small style='font-size:12px; color:#666;'>(数秒お待ちください)</small>";
           text.style.display = 'block';
 
-          // 3. 処理済みの画像を使ってTesseract.jsで文字認識
           try {
             const worker = await Tesseract.createWorker('jpn+eng');
             const ret = await worker.recognize(img.src);
@@ -171,6 +147,7 @@
       reader.readAsDataURL(file);
     }
 
+    // --- 計算ロジック（そのまま） ---
     const cpmTable = [
       { level: 14.0, cpm: 0.49985844 }, { level: 15.0, cpm: 0.51739395 }, 
       { level: 20.0, cpm: 0.59740000 }, { level: 25.0, cpm: 0.66793400 },
