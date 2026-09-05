@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.json">
+  <title>個体値チェッカー</title>
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      padding: 20px; 
+      background-color: #f0f2f5;
+      color: #333;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #4CAF50;
+      margin-top: 0;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    input { 
+      font-size: 16px; 
+      padding: 12px; 
+      width: 100%; 
+      box-sizing: border-box; 
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button { 
+      font-size: 16px; 
+      padding: 15px; 
+      width: 100%; 
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:active {
+      background-color: #45a049;
+    }
+    #resultArea {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #e8f5e9;
+      border-radius: 8px;
+      display: none;
+    }
+    .install-banner {
+      display: none;
+      background: #ff9800;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="installBanner" class="install-banner">
+      💡 Safariの「共有」ボタンから「ホーム画面に追加」すると、オフラインアプリとして使えます！
+    </div>
+
+    <h1>IV Checker</h1>
+    
+    <div class="form-group">
+      <label for="cpInput">CP</label>
+      <input type="number" id="cpInput" placeholder="例: 1500" pattern="[0-9]*">
+    </div>
+    
+    <div class="form-group">
+      <label for="hpInput">HP</label>
+      <input type="number" id="hpInput" placeholder="例: 120" pattern="[0-9]*">
+    </div>
+    
+    <button onclick="calculate()">計算する</button>
+    
+    <div id="resultArea">
+      <h3 style="margin-top:0; color:#2e7d32;">計算結果</h3>
+      <p id="resultText"></p>
+    </div>
+  </div>
+
+  <script>
+    // サービスワーカーの登録
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(function(registration) {
+            console.log('オフライン対応完了 (ServiceWorker登録成功)');
+          })
+          .catch(function(err) {
+            console.log('ServiceWorker登録失敗: ', err);
+          });
+      });
+    }
+
+    // iOS Safariでスタンドアロンモード（アプリ化）されていない場合にバナーを表示
+    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    const isIos = () => {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      return /iphone|ipad|ipod/.test(userAgent);
+    };
+
+    if (isIos() && !isStandalone) {
+      document.getElementById('installBanner').style.display = 'block';
+    }
+
+    // 計算ロジック（プレースホルダー）
+    function calculate() {
+      const cp = document.getElementById('cpInput').value;
+      const hp = document.getElementById('hpInput').value;
+      const resultArea = document.getElementById('resultArea');
+      const resultText = document.getElementById('resultText');
+      
+      if (!cp || !hp) {
+        alert('CPとHPを入力してください。');
+        return;
+      }
+      
+      resultArea.style.display = 'block';
+      resultText.innerHTML = `入力されたCP: <b>${cp}</b><br>入力されたHP: <b>${hp}</b><br><br><small>※ここに本格的な個体値逆算ロジックを追加します。</small>`;
+    }
+  </script>
+</body>
+</html>
