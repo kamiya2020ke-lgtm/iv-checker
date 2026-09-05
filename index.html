@@ -30,13 +30,174 @@
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #ddd; border-radius: 4px; }
     input[type=range]::-webkit-slider-thumb { height: 24px; width: 24px; border-radius: 50%; background: #1976D2; cursor: pointer; -webkit-appearance: none; margin-top: -8px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid white;}
     
-    #resultArea { margin-top: 25px; padding: 20px; background-color: #E3F2FD; border-radius: 12px; display: none; border: 2px solid #BBDEFB;}
-    .rank-text { font-size: 32px; font-weight: bold; color: #D32F2F; text-align: center; margin: 10px 0; }
+    #resultArea { margin-top: 25px; padding: 18px; background-color: #f5f7fa; border-radius: 12px; display: none; border: 1px solid #e0e0e0; }
+    .rank-text { font-size: 26px; font-weight: bold; color: #D32F2F; text-align: center; margin: 6px 0; }
+    
+    /* 2つのリーグ表示用のスタイル */
+    .leagues-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .league-card {
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .league-great {
+      background-color: #E3F2FD;
+      border-color: #90CAF9;
+    }
+    .league-ultra {
+      background-color: #FFF8E1;
+      border-color: #FFE082;
+    }
+    .league-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .league-title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .league-great .league-title { color: #1565C0; }
+    .league-ultra .league-title { color: #F57F17; }
+    .league-badge {
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 7px;
+      border-radius: 4px;
+      color: white;
+    }
+    .badge-great { background-color: #1976D2; }
+    .badge-ultra { background-color: #F57C00; }
+    .stat-box {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #333;
+      background: rgba(255,255,255,0.75);
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    /* 画像アップロード関連のスタイル */
+    .upload-section { margin-bottom: 20px; }
+    .drop-zone {
+      border: 2px dashed #90caf9;
+      border-radius: 10px;
+      padding: 16px 12px;
+      text-align: center;
+      background-color: #f8fbff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      background-color: #e3f2fd;
+      border-color: #1976D2;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.15);
+    }
+    .drop-zone-icon {
+      font-size: 28px;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .drop-zone-title {
+      font-weight: bold;
+      font-size: 14px;
+      color: #1976D2;
+      margin-bottom: 4px;
+    }
+    .drop-zone-hint {
+      font-size: 12px;
+      color: #666;
+    }
+    .preview-container {
+      display: none;
+      margin-top: 12px;
+      padding: 10px;
+      background: #fafafa;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      align-items: center;
+      gap: 12px;
+    }
+    .preview-thumb {
+      width: 54px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .preview-info {
+      flex: 1;
+      font-size: 13px;
+    }
+    .btn-clear {
+      background: #eee;
+      border: none;
+      color: #666;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-clear:hover { background: #ddd; color: #222; }
+    
+    .status-badge {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    .status-badge.loading {
+      display: block;
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      color: #f57f17;
+    }
+    .status-badge.success {
+      display: block;
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      color: #2e7d32;
+    }
+    .status-badge.error {
+      display: block;
+      background: #ffebee;
+      border: 1px solid #ffcdd2;
+      color: #c62828;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>GBLチェッカー</h1>
+
+    <!-- 画像読み込みセクション -->
+    <div class="upload-section">
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('imageInput').click()">
+        <span class="drop-zone-icon">📷</span>
+        <div class="drop-zone-title">スクリーンショットを読み込む</div>
+        <div class="drop-zone-hint">タップして選択 / ドロップ / 貼り付け (Ctrl+V)</div>
+        <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+      </div>
+
+      <div class="preview-container" id="previewContainer">
+        <img id="previewImg" class="preview-thumb" src="" alt="プレビュー">
+        <div class="preview-info">
+          <div id="previewName" style="font-weight:bold; margin-bottom:4px; word-break:break-all;">画像</div>
+          <button type="button" class="btn-clear" onclick="clearLoadedImage()">画像を解除</button>
+        </div>
+      </div>
+
+      <div class="status-badge" id="statusBadge"></div>
+    </div>
     
     <label style="font-weight:bold; color:#444;">ポケモン選択</label>
     <select id="pokemonSelect" onchange="checkRank()"></select>
@@ -75,8 +236,27 @@
     </div>
     
     <div id="resultArea">
-      <h3 style="margin-top:0; color:#1565C0; text-align: center;">スーパーリーグ順位</h3>
-      <div id="resultText"></div>
+      <div id="resultPokemonName" style="text-align:center; font-weight:bold; color:#333; font-size:18px; margin-bottom:12px;"></div>
+      
+      <div class="leagues-container">
+        <!-- スーパーリーグ (CP 1500) -->
+        <div class="league-card league-great">
+          <div class="league-header">
+            <span class="league-badge badge-great">CP 1500</span>
+            <span class="league-title">スーパーリーグ</span>
+          </div>
+          <div id="resultGreat"></div>
+        </div>
+
+        <!-- ハイパーリーグ (CP 2500) -->
+        <div class="league-card league-ultra">
+          <div class="league-header">
+            <span class="league-badge badge-ultra">CP 2500</span>
+            <span class="league-title">ハイパーリーグ</span>
+          </div>
+          <div id="resultUltra"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -97,7 +277,528 @@
       updateGauge('Atk');
       updateGauge('Def');
       updateGauge('Hp');
+
+      // ドラッグ&ドロップとペーストのイベント設定
+      initImageDropAndPaste();
     };
+
+    // ドラッグ＆ドロップ、ペースト設定
+    function initImageDropAndPaste() {
+      const dropZone = document.getElementById('dropZone');
+      if (!dropZone) return;
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('dragover');
+        });
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+          processImageFile(files[0]);
+        }
+      });
+
+      // クリップボードからのペースト対応
+      window.addEventListener('paste', (e) => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (const item of items) {
+          if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const blob = item.getAsFile();
+            processImageFile(blob);
+            break;
+          }
+        }
+      });
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) {
+        processImageFile(file);
+      }
+    }
+
+    function setStatus(type, message) {
+      const badge = document.getElementById('statusBadge');
+      if (!badge) return;
+      if (!type) {
+        badge.style.display = 'none';
+        badge.className = 'status-badge';
+        badge.textContent = '';
+        return;
+      }
+      badge.className = 'status-badge ' + type;
+      badge.innerHTML = message;
+      badge.style.display = 'block';
+    }
+
+    function clearLoadedImage() {
+      document.getElementById('imageInput').value = '';
+      document.getElementById('previewContainer').style.display = 'none';
+      document.getElementById('previewImg').src = '';
+      setStatus(null, '');
+    }
+
+    function processImageFile(file) {
+      if (!file || !file.type.startsWith('image/')) {
+        setStatus('error', '⚠️ 画像ファイルを選択してください。');
+        return;
+      }
+
+      setStatus('loading', '⏳ 画像を解析中... 個体値バーを読み取っています');
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          // プレビュー表示
+          const previewContainer = document.getElementById('previewContainer');
+          const previewImg = document.getElementById('previewImg');
+          const previewName = document.getElementById('previewName');
+          previewImg.src = e.target.result;
+          previewName.textContent = file.name || '読み込んだ画像';
+          previewContainer.style.display = 'flex';
+
+          // 個体値解析
+          try {
+            const result = analyzeIVFromImage(img);
+            // スライダー・ゲージに反映
+            document.getElementById('ivAtk').value = result.atk;
+            document.getElementById('ivDef').value = result.def;
+            document.getElementById('ivHp').value = result.hp;
+            updateGauge('Atk');
+            updateGauge('Def');
+            updateGauge('Hp');
+
+            // ポケモン名（どのポケモンか）の自動識別
+            const detectedPokemon = identifyPokemonFromImage(img);
+            if (detectedPokemon) {
+              const select = document.getElementById('pokemonSelect');
+              select.value = detectedPokemon;
+            }
+
+            checkRank();
+
+            let msg = `✅ <b>解析成功！</b> `;
+            if (detectedPokemon) {
+              msg += `ポケモン: <b>${detectedPokemon}</b><br>`;
+            }
+            msg += `こうげき: <b>${result.atk}</b> / ぼうぎょ: <b>${result.def}</b> / HP: <b>${result.hp}</b>`;
+            setStatus('success', msg);
+          } catch (err) {
+            console.error(err);
+            setStatus('error', '⚠️ ' + (err.message || '個体値バーを認識できませんでした。リーダー評価画面の画像をお試しください。'));
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Canvasによるリーダー評価バーの高速・高精度ピクセル解析
+    function analyzeIVFromImage(imgElement) {
+      const canvas = document.createElement('canvas');
+      const w = imgElement.naturalWidth || imgElement.width;
+      const h = imgElement.naturalHeight || imgElement.height;
+      if (!w || !h) {
+        throw new Error("画像のサイズが取得できませんでした。");
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgElement, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      function getPixel(x, y) {
+        const idx = (y * w + x) * 4;
+        return { r: data[idx], g: data[idx+1], b: data[idx+2], a: data[idx+3] };
+      }
+
+      // バーの塗り判定（オレンジまたはMAX赤）
+      function isBarFill(r, g, b) {
+        // オレンジ: R高(>190), G中(90-195), B低(<95)
+        const isOrange = (r > 190 && g > 90 && g < 195 && b < 95);
+        // 赤 (15満タン時): R高(>200), G低(<90), B低(<90)
+        const isRed = (r > 200 && g < 90 && b < 90);
+        return isOrange || isRed;
+      }
+
+      // バーの空背景判定（薄いグレー）
+      function isBarTrack(r, g, b) {
+        return (r > 210 && r < 248 && Math.abs(r - g) <= 8 && Math.abs(g - b) <= 8);
+      }
+
+      function scanRow(y) {
+        let inBar = false;
+        let barStart = -1;
+        let barEnd = -1;
+        let fillMax = -1;
+        let orangeCount = 0;
+        const minX = Math.floor(w * 0.05);
+        const maxX = Math.floor(w * 0.65);
+
+        for (let x = minX; x < maxX; x++) {
+          const p = getPixel(x, y);
+          const isFill = isBarFill(p.r, p.g, p.b);
+          const isTrack = isBarTrack(p.r, p.g, p.b);
+
+          if (isFill || isTrack) {
+            if (!inBar) {
+              inBar = true;
+              barStart = x;
+            }
+            barEnd = x;
+            if (isFill) {
+              fillMax = x;
+              orangeCount++;
+            }
+          } else if (inBar) {
+            // セグメント間の白ギャップ先読みチェック
+            let resumes = false;
+            const lookAhead = Math.max(8, Math.floor(w * 0.02));
+            for (let k = 1; k <= lookAhead && (x + k) < maxX; k++) {
+              const p2 = getPixel(x + k, y);
+              if (isBarFill(p2.r, p2.g, p2.b) || isBarTrack(p2.r, p2.g, p2.b)) {
+                resumes = true;
+                break;
+              }
+            }
+            if (!resumes) {
+              break;
+            }
+          }
+        }
+
+        if (inBar && (barEnd - barStart) >= Math.floor(w * 0.18)) {
+          return { y, barStart, barEnd, fillMax, orangeCount, barWidth: barEnd - barStart };
+        }
+        return null;
+      }
+
+      // 画面下半分 (y: 0.50*h 〜 0.92*h) をスキャン
+      const minY = Math.floor(h * 0.50);
+      const maxY = Math.floor(h * 0.92);
+      const stepY = Math.max(1, Math.floor(h * 0.002));
+      const candidateRows = [];
+
+      for (let y = minY; y < maxY; y += stepY) {
+        const res = scanRow(y);
+        if (res && (res.orangeCount >= 3 || res.barWidth >= Math.floor(w * 0.2))) {
+          candidateRows.push(res);
+        }
+      }
+
+      if (candidateRows.length === 0) {
+        throw new Error("個体値バーが見つかりませんでした。リーダー評価画面のスクリーンショットをお試しください。");
+      }
+
+      // Y軸の連続行でクラスタリング
+      const clusters = [];
+      let currentCluster = [];
+      const yTolerance = Math.max(4, Math.floor(h * 0.012));
+
+      for (const row of candidateRows) {
+        if (currentCluster.length === 0) {
+          currentCluster.push(row);
+        } else {
+          const prev = currentCluster[currentCluster.length - 1];
+          if (row.y - prev.y <= yTolerance) {
+            currentCluster.push(row);
+          } else {
+            clusters.push(currentCluster);
+            currentCluster = [row];
+          }
+        }
+      }
+      if (currentCluster.length > 0) {
+        clusters.push(currentCluster);
+      }
+
+      const validClusters = clusters.filter(c => c.length >= 2);
+      if (validClusters.length < 3) {
+        throw new Error(`個体値バーが十分に検出できませんでした (${validClusters.length}/3本)。`);
+      }
+
+      // Y座標順にソート
+      validClusters.sort((a, b) => a[0].y - b[0].y);
+
+      // 3本以上ある場合、バー間の間隔が最も近い3本を選択
+      let bestTrio = validClusters.slice(0, 3);
+      if (validClusters.length > 3) {
+        let minDiff = Infinity;
+        for (let i = 0; i <= validClusters.length - 3; i++) {
+          const y0 = validClusters[i][Math.floor(validClusters[i].length / 2)].y;
+          const y1 = validClusters[i+1][Math.floor(validClusters[i+1].length / 2)].y;
+          const y2 = validClusters[i+2][Math.floor(validClusters[i+2].length / 2)].y;
+          const diff = Math.abs((y1 - y0) - (y2 - y1));
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestTrio = [validClusters[i], validClusters[i+1], validClusters[i+2]];
+          }
+        }
+      }
+
+      const barCenters = bestTrio.map(c => c[Math.floor(c.length / 2)]);
+      const starts = barCenters.map(b => b.barStart).sort((a, b) => a - b);
+      const ends = barCenters.map(b => b.barEnd).sort((a, b) => a - b);
+      const trackStartX = starts[1]; // 中央値
+      const trackEndX = ends[1];     // 中央値
+      const totalTrackWidth = trackEndX - trackStartX;
+      const segWidth = totalTrackWidth / 3;
+
+      if (totalTrackWidth <= 10) {
+        throw new Error("バーの幅が正常に検出できませんでした。");
+      }
+
+      function calcIV(bRow) {
+        if (bRow.fillMax < trackStartX) return 0;
+        const filledPx = Math.min(totalTrackWidth, bRow.fillMax - trackStartX);
+        const ratio = filledPx / totalTrackWidth;
+
+        if (ratio >= 0.975) return 15;
+        if (ratio <= 0.02) return 0;
+
+        // セグメントごとの計算
+        if (ratio <= 0.333 + 0.025) {
+          const segRatio = Math.min(1, Math.max(0, filledPx / segWidth));
+          return Math.min(5, Math.max(0, Math.round(segRatio * 5)));
+        } else if (ratio <= 0.666 + 0.025) {
+          const segRatio = Math.min(1, Math.max(0, (filledPx - segWidth) / segWidth));
+          return 5 + Math.min(5, Math.max(0, Math.round(segRatio * 5)));
+        } else {
+          const segRatio = Math.min(1, Math.max(0, (filledPx - segWidth * 2) / segWidth));
+          return 10 + Math.min(5, Math.max(0, Math.round(segRatio * 5)));
+        }
+      }
+
+      return {
+        atk: calcIV(barCenters[0]),
+        def: calcIV(barCenters[1]),
+        hp: calcIV(barCenters[2]),
+        nameBox: {
+          x: Math.floor(w * 0.15),
+          y: Math.floor(h * 0.34),
+          w: Math.floor(w * 0.70),
+          h: Math.floor(h * 0.10)
+        }
+      };
+    }
+
+    // ポケモン名（どのポケモンか）を高精度・完全ローカル（外部通信なし）で自動識別するエンジン
+    function identifyPokemonFromImage(imgElement) {
+      const canvas = document.createElement('canvas');
+      const w = imgElement.naturalWidth || imgElement.width;
+      const h = imgElement.naturalHeight || imgElement.height;
+      if (!w || !h) return null;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgElement, 0, 0);
+
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      function getPixel(x, y) {
+        const idx = (y * w + x) * 4;
+        return { r: data[idx], g: data[idx+1], b: data[idx+2] };
+      }
+
+      // 1. ポケモン名テキスト領域の走査（y: 0.495*h 〜 0.535*h, x: 0.20*w 〜 0.70*w）
+      // ペンマーク（右側）や性別マーク、下部のHPバーを避ける最適な座標範囲
+      const textMinY = Math.floor(h * 0.495);
+      const textMaxY = Math.floor(h * 0.535);
+      const textMinX = Math.floor(w * 0.20);
+      const textMaxX = Math.floor(w * 0.70);
+
+      const colCounts = new Array(textMaxX - textMinX).fill(0);
+      for (let x = textMinX; x < textMaxX; x++) {
+        for (let y = textMinY; y < textMaxY; y++) {
+          const p = getPixel(x, y);
+          const lum = 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
+          if (lum < 165 && p.r < 180 && p.g < 180 && p.b < 180) {
+            colCounts[x - textMinX]++;
+          }
+        }
+      }
+
+      // 文字列の各文字ブロック（列の塊）を抽出
+      const charBlocks = [];
+      let inBlock = false;
+      let blockStart = -1;
+      for (let i = 0; i < colCounts.length; i++) {
+        const count = colCounts[i];
+        if (count >= 3) {
+          if (!inBlock) {
+            inBlock = true;
+            blockStart = textMinX + i;
+          }
+        } else {
+          if (inBlock) {
+            inBlock = false;
+            const blockEnd = textMinX + i - 1;
+            const blockW = blockEnd - blockStart + 1;
+            if (blockW >= 8) {
+              charBlocks.push({ start: blockStart, end: blockEnd, width: blockW });
+            }
+          }
+        }
+      }
+
+      // 右端のペンマークや孤立ブロックを除外
+      const filteredBlocks = [];
+      for (let i = 0; i < charBlocks.length; i++) {
+        if (i > 0) {
+          const gap = charBlocks[i].start - charBlocks[i-1].end;
+          // 文字間の通常ギャップ（10〜20px）を超える大きな隙間（25px以上）があればペンマーク
+          if (gap >= 25) break;
+        }
+        filteredBlocks.push(charBlocks[i]);
+      }
+
+      if (filteredBlocks.length === 0) return null;
+
+      // 各文字ブロックを24x24の正規化バイナリグリッドに変換
+      const targetBitmaps = [];
+      for (const block of filteredBlocks) {
+        let cMinY = 999, cMaxY = -1;
+        for (let y = textMinY; y < textMaxY; y++) {
+          for (let x = block.start; x <= block.end; x++) {
+            const p = getPixel(x, y);
+            const lum = 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
+            if (lum < 165) {
+              if (y < cMinY) cMinY = y;
+              if (y > cMaxY) cMaxY = y;
+            }
+          }
+        }
+        const cW = Math.max(1, block.end - block.start + 1);
+        const cH = Math.max(1, cMaxY - cMinY + 1);
+
+        const arr = new Float32Array(24 * 24);
+        for (let ny = 0; ny < 24; ny++) {
+          for (let nx = 0; nx < 24; nx++) {
+            const sx = Math.floor(block.start + (nx / 24) * cW);
+            const sy = Math.floor(cMinY + (ny / 24) * cH);
+            const p = getPixel(sx, sy);
+            const lum = 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
+            arr[ny * 24 + nx] = lum < 165 ? 1.0 : 0.0;
+          }
+        }
+        targetBitmaps.push(arr);
+      }
+
+      // 2. カタカナフォントテンプレート作成（Canvas動的描画）
+      if (!window._charTemplateCache) window._charTemplateCache = {};
+      function getCharTemplate(ch) {
+        if (window._charTemplateCache[ch]) return window._charTemplateCache[ch];
+
+        const tCanvas = document.createElement('canvas');
+        tCanvas.width = 48;
+        tCanvas.height = 48;
+        const tCtx = tCanvas.getContext('2d');
+        tCtx.fillStyle = 'white';
+        tCtx.fillRect(0, 0, 48, 48);
+        tCtx.fillStyle = 'black';
+        tCtx.font = "bold 32px 'Hiragino Kaku Gothic ProN', Meiryo, 'Segoe UI', Roboto, sans-serif";
+        tCtx.textBaseline = 'top';
+        tCtx.fillText(ch, 2, 2);
+
+        const tImgData = tCtx.getImageData(0, 0, 48, 48).data;
+        let minX = 999, maxX = -1, minY = 999, maxY = -1;
+        for (let y = 0; y < 48; y++) {
+          for (let x = 0; x < 48; x++) {
+            if (tImgData[(y * 48 + x) * 4] < 128) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        const tw = Math.max(1, maxX - minX + 1);
+        const th = Math.max(1, maxY - minY + 1);
+
+        const norm = new Float32Array(24 * 24);
+        for (let ny = 0; ny < 24; ny++) {
+          for (let nx = 0; nx < 24; nx++) {
+            const sx = Math.floor(minX + (nx / 24) * tw);
+            const sy = Math.floor(minY + (ny / 24) * th);
+            norm[ny * 24 + nx] = tImgData[(sy * 48 + sx) * 4] < 128 ? 1.0 : 0.0;
+          }
+        }
+        window._charTemplateCache[ch] = norm;
+        return norm;
+      }
+
+      function compareBitmaps(a, b) {
+        let match = 0, union = 0;
+        for (let i = 0; i < 24 * 24; i++) {
+          if (a[i] > 0.5 || b[i] > 0.5) {
+            union++;
+            if (a[i] > 0.5 && b[i] > 0.5) match++;
+          }
+        }
+        return union === 0 ? 0 : match / union;
+      }
+
+      // 3. ポケモンイラスト領域（カラー特徴抽出）
+      let yellowPixels = 0, totalColorSamples = 0;
+      for (let y = Math.floor(h * 0.20); y < Math.floor(h * 0.42); y += 4) {
+        for (let x = Math.floor(w * 0.25); x < Math.floor(w * 0.75); x += 4) {
+          const p = getPixel(x, y);
+          totalColorSamples++;
+          if (p.r > 190 && p.g > 160 && p.b < 110) yellowPixels++;
+        }
+      }
+      const yellowRatio = totalColorSamples > 0 ? yellowPixels / totalColorSamples : 0;
+
+      // 4. 全候補の照合スコアリング
+      const scores = [];
+      const detectedLen = targetBitmaps.length;
+
+      for (const pokeName in POKEDEX) {
+        let score = 0;
+        const len = Math.min(pokeName.length, detectedLen);
+        for (let i = 0; i < len; i++) {
+          const ch = pokeName[i];
+          const tmpl = getCharTemplate(ch);
+          const sim = compareBitmaps(targetBitmaps[i], tmpl);
+          score += sim;
+        }
+
+        // 文字数の一致度ボーナス
+        if (pokeName.length === detectedLen) {
+          score *= 1.35;
+        } else {
+          score *= Math.max(0.3, 1.0 - Math.abs(pokeName.length - detectedLen) * 0.2);
+        }
+
+        // カラー一致ボーナス
+        if (pokeName === "ピカチュウ" && yellowRatio > 0.02) {
+          score += 0.5;
+        }
+
+        scores.push({ name: pokeName, score });
+      }
+
+      scores.sort((a, b) => b.score - a.score);
+      return scores.length > 0 && scores[0].score > 0.8 ? scores[0].name : null;
+    }
 
     // 視覚的ゲージと数値を連動させる関数
     function updateGauge(stat) {
@@ -134,7 +835,7 @@
       0.84280396, 0.84530001
     ];
 
-    let currentRankingCache = { pokemon: "", ranks: [] };
+    let rankingCache = {};
 
     function calculateGBLStats(baseAtk, baseDef, baseHp, ivA, ivD, ivH, targetCP = 1500) {
       let bestStat = null;
@@ -156,21 +857,38 @@
       return bestStat;
     }
 
-    function getRanking(pokemonName) {
-      if (currentRankingCache.pokemon === pokemonName) return currentRankingCache.ranks;
+    function getRanking(pokemonName, targetCP = 1500) {
+      const cacheKey = pokemonName + '_' + targetCP;
+      if (rankingCache[cacheKey]) return rankingCache[cacheKey];
       const baseStats = POKEDEX[pokemonName];
+      if (!baseStats) return [];
       const ranks = [];
       for (let a = 0; a <= 15; a++) {
         for (let d = 0; d <= 15; d++) {
           for (let h = 0; h <= 15; h++) {
-            const stat = calculateGBLStats(baseStats.atk, baseStats.def, baseStats.hp, a, d, h, 1500);
+            const stat = calculateGBLStats(baseStats.atk, baseStats.def, baseStats.hp, a, d, h, targetCP);
             if (stat) ranks.push(stat);
           }
         }
       }
       ranks.sort((a, b) => b.statProduct - a.statProduct);
-      currentRankingCache = { pokemon: pokemonName, ranks: ranks };
+      rankingCache[cacheKey] = ranks;
       return ranks;
+    }
+
+    function formatLeagueResult(myStat, myRank) {
+      if (!myStat) {
+        return `<div style="text-align:center; color:#888; padding:12px; font-size:14px;">CP制限内の個体がありません</div>`;
+      }
+      const percentile = ((myRank / 4096) * 100).toFixed(1);
+      return `
+        <div class="rank-text">${myRank} 位 <span style="font-size:14px; color:#666;">/ 4096</span></div>
+        <p style="text-align:center; margin:0 0 8px 0; color:#555; font-size:13px;">(上位 ${percentile} %)</p>
+        <div class="stat-box">
+          <div>CP: <b>${myStat.cp}</b> <span style="color:#777; font-size:12px;">(Lv ${myStat.level})</span></div>
+          <div>ステータス積: <b>${Math.round(myStat.statProduct).toLocaleString()}</b></div>
+        </div>
+      `;
     }
 
     function checkRank() {
@@ -178,34 +896,35 @@
       const a = parseInt(document.getElementById('ivAtk').value);
       const d = parseInt(document.getElementById('ivDef').value);
       const h = parseInt(document.getElementById('ivHp').value);
-      
-      const ranks = getRanking(selectedPokemon);
-      let myRank = -1;
-      let myStat = null;
-      
-      for (let i = 0; i < ranks.length; i++) {
-        if (ranks[i].ivA === a && ranks[i].ivD === d && ranks[i].ivH === h) {
-          myRank = i + 1; myStat = ranks[i]; break;
-        }
-      }
 
       const resultArea = document.getElementById('resultArea');
-      const resultText = document.getElementById('resultText');
-      resultArea.style.display = 'block';
-      
-      if (myStat) {
-        const percentile = ((myRank / 4096) * 100).toFixed(1);
-        resultText.innerHTML = `
-          <div style="text-align:center; font-weight:bold; color:#555; font-size:18px;">${selectedPokemon}</div>
-          <div class="rank-text">${myRank} 位 <span style="font-size:16px; color:#666;">/ 4096</span></div>
-          <p style="text-align:center; margin-top:0; color:#555;">(上位 ${percentile} %)</p>
-          <hr style="border:0; border-top:1px dashed #BBDEFB;">
-          <ul style="line-height:2.0; color:#333; padding-left:20px; font-size:16px;">
-            <li>CP: <b>${myStat.cp}</b> <span style="color:#777; font-size:14px;">(Lv ${myStat.level})</span></li>
-            <li>ステータス積: <b>${Math.round(myStat.statProduct).toLocaleString()}</b></li>
-          </ul>
-        `;
+      const resultPokemonName = document.getElementById('resultPokemonName');
+      const resultGreat = document.getElementById('resultGreat');
+      const resultUltra = document.getElementById('resultUltra');
+
+      resultPokemonName.textContent = selectedPokemon;
+
+      // スーパーリーグ (CP 1500)
+      const ranksGreat = getRanking(selectedPokemon, 1500);
+      let rankGreat = -1, statGreat = null;
+      for (let i = 0; i < ranksGreat.length; i++) {
+        if (ranksGreat[i].ivA === a && ranksGreat[i].ivD === d && ranksGreat[i].ivH === h) {
+          rankGreat = i + 1; statGreat = ranksGreat[i]; break;
+        }
       }
+      resultGreat.innerHTML = formatLeagueResult(statGreat, rankGreat);
+
+      // ハイパーリーグ (CP 2500)
+      const ranksUltra = getRanking(selectedPokemon, 2500);
+      let rankUltra = -1, statUltra = null;
+      for (let i = 0; i < ranksUltra.length; i++) {
+        if (ranksUltra[i].ivA === a && ranksUltra[i].ivD === d && ranksUltra[i].ivH === h) {
+          rankUltra = i + 1; statUltra = ranksUltra[i]; break;
+        }
+      }
+      resultUltra.innerHTML = formatLeagueResult(statUltra, rankUltra);
+
+      resultArea.style.display = 'block';
     }
   </script>
 </body>
