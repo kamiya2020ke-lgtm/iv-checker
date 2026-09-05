@@ -6,14 +6,15 @@
   <link rel="manifest" href="manifest.json">
   <title>GBL順位チェッカー</title>
   <script src="pokedex.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
     .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     h1 { text-align: center; color: #1976D2; font-size: 24px; margin-top: 0; }
     .image-upload-area { border: 2px dashed #1976D2; border-radius: 8px; padding: 20px; text-align: center; background-color: #E3F2FD; cursor: pointer; margin-bottom: 20px; position: relative; }
     .image-upload-area p { color: #1565C0; font-weight: bold; margin: 0; line-height: 1.5; }
-    .image-upload-area img { max-width: 100%; border-radius: 4px; display: none; margin-top: 10px; border: 1px solid #ccc; }
+    /* 今回はimgではなくcanvasを使って結果を表示します */
+    #scanCanvas { max-width: 100%; border-radius: 4px; display: none; margin-top: 10px; border: 1px solid #ccc; }
+    
     .form-group { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
     label { font-weight: bold; width: 40%; font-size: 14px; }
     input[type="number"], select { font-size: 16px; padding: 8px; width: 50%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
@@ -28,9 +29,10 @@
     <h1>GBLチェッカー</h1>
     
     <div class="image-upload-area" onclick="document.getElementById('fileInput').click()">
-      <p id="uploadText">📷 ここをタップして<br>スクショを選択</p>
+      <p id="uploadText">📷 タップしてスクショを選択<br><small>（個体値のゲージを自動で読み取ります）</small></p>
       <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="previewImage(event)">
-      <img id="previewImage">
+      <!-- 読み取り結果（緑の線）を描画するためのキャンバス -->
+      <canvas id="scanCanvas"></canvas>
     </div>
 
     <div class="form-group">
@@ -60,10 +62,10 @@
   </div>
 
   <script>
+    // --- 初期化 ---
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() { navigator.serviceWorker.register('service-worker.js'); });
     }
-
     window.onload = function() {
       const select = document.getElementById('pokemonSelect');
       for (const pokemonName in POKEDEX) {
@@ -74,78 +76,147 @@
       }
     };
 
-    // ▼ 修正：画像を縮小して全体を読み込むように変更 ▼
-    async function previewImage(event) {
+    // ▼ ピクセル解析によるゲージ読み取り処理 ▼
+    function previewImage(event) {
       const file = event.target.files[0];
       if (!file) return;
 
-      const img = document.getElementById('previewImage');
+      const canvas = document.getElementById('scanCanvas');
+      const ctx = canvas.getContext('2d');
       const text = document.getElementById('uploadText');
       const reader = new FileReader();
 
       reader.onload = function(e) {
-        const tempImg = new Image();
-        tempImg.onload = async function() {
-          
-          // Canvasを使って、画像を「横幅500px」に縮小する（処理速度を上げるため）
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
+        const img = new Image();
+        img.onload = function() {
+          // 処理を軽くするために横幅500pxに縮小
           const targetWidth = 500;
-          const scale = targetWidth / tempImg.width;
+          const scale = targetWidth / img.width;
           canvas.width = targetWidth;
-          canvas.height = tempImg.height * scale;
+          canvas.height = img.height * scale;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           
-          // 切り抜きや白黒化はせず、そのまま全体を描画
-          ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
-          
-          img.src = canvas.toDataURL('image/jpeg');
-          img.style.display = 'block';
-          
-          text.innerHTML = "⏳ 全体の文字を解析中...<br><small style='font-size:12px; color:#666;'>(数秒お待ちください)</small>";
-          text.style.display = 'block';
+          canvas.style.display = 'block';
+          text.style.display = 'none';
 
-          try {
-            const worker = await Tesseract.createWorker('jpn+eng');
-            const ret = await worker.recognize(img.src);
-            const recognizedText = ret.data.text;
-            await worker.terminate();
+          // 1. 画像のピクセルデータを取得
+          const width = canvas.width;
+          const height = canvas.height;
+          const imageData = ctx.getImageData(0, 0, width, height);
+          const data = imageData.data;
 
-            console.log("【OCR読み取り結果】\n", recognizedText);
+          // 走査範囲：画面の左側（10%〜55%）かつ、下半分（50%〜90%）
+          const startX = Math.floor(width * 0.1);
+          const endX = Math.floor(width * 0.55);
+          const startY = Math.floor(height * 0.5);
+          const endY = Math.floor(height * 0.9);
 
-            let foundPokemon = "";
-            let foundCP = "";
+          let rowHits = new Array(height).fill(0);
 
-            const select = document.getElementById('pokemonSelect');
-            for (const pokemonName in POKEDEX) {
-              if (recognizedText.includes(pokemonName)) {
-                select.value = pokemonName;
-                foundPokemon = pokemonName;
-                break;
+          // 2. 指定範囲の色を1ピクセルずつ調べる
+          for (let y = startY; y < endY; y++) {
+            let hits = 0;
+            for (let x = startX; x < endX; x++) {
+              const i = (y * width + x) * 4;
+              const r = data[i], g = data[i+1], b = data[i+2];
+
+              // 「オレンジ色/赤（ゲージの中身）」または「グレー（空のゲージ）」の条件
+              const isColored = (r > 180 && b < 150 && (r - b) > 40);
+              const isGray = (r > 150 && r < 235 && Math.abs(r-g) < 15 && Math.abs(g-b) < 15);
+
+              if (isColored || isGray) hits++;
+            }
+            rowHits[y] = hits;
+          }
+
+          // 3. 反応が多かった行（ゲージがあるY座標）を3つ見つける
+          let peaks = [];
+          let inPeak = false;
+          let currentPeakY = 0;
+          let currentPeakMaxHits = 0;
+          const minBarWidth = width * 0.15; // ゲージの幅は最低でも画面の15%はあるはず
+
+          for (let y = startY; y < endY; y++) {
+            if (rowHits[y] > minBarWidth) {
+              if (!inPeak) {
+                inPeak = true;
+                currentPeakMaxHits = rowHits[y];
+                currentPeakY = y;
+              } else if (rowHits[y] > currentPeakMaxHits) {
+                currentPeakMaxHits = rowHits[y];
+                currentPeakY = y;
               }
-            }
-
-            const cpMatch = recognizedText.match(/CP\s*(\d+)/i);
-            if (cpMatch && cpMatch[1]) { foundCP = cpMatch[1]; }
-
-            if (foundPokemon) {
-              text.innerHTML = `✅ 解析完了！<br><small style="color:#2e7d32; font-size:14px;">「${foundPokemon}」を検出</small>`;
-              if (foundCP) text.innerHTML += `<br><small style="color:#2e7d32;">(参考CP: ${foundCP})</small>`;
             } else {
-              text.innerHTML = "⚠️ 完了<br><small>ポケモン名が見つかりませんでした</small>";
+              if (inPeak) { peaks.push(currentPeakY); inPeak = false; }
             }
-            
-            setTimeout(() => { text.style.display = 'none'; }, 4000);
+          }
 
-          } catch (err) {
-            console.error(err);
-            text.innerHTML = "❌ 解析エラーが発生しました";
+          // 通常、下半分には3本のゲージがあるので、最後の3つを取得
+          let ivs = [];
+          if (peaks.length >= 3) {
+            const targetPeaks = peaks.slice(-3); // 攻撃、防御、HPの3つのY座標
+
+            // 4. 各ゲージの長さを測る
+            for (let p = 0; p < targetPeaks.length; p++) {
+              const y = targetPeaks[p];
+              let firstX = -1, lastX = -1, coloredCount = 0;
+
+              for (let x = startX; x < width * 0.6; x++) {
+                const i = (y * width + x) * 4;
+                const r = data[i], g = data[i+1], b = data[i+2];
+                const isColored = (r > 180 && b < 150 && (r - b) > 40);
+                const isGray = (r > 150 && r < 235 && Math.abs(r-g) < 15 && Math.abs(g-b) < 15);
+
+                if (isColored || isGray) {
+                  if (firstX === -1) firstX = x;
+                  lastX = x;
+                  if (isColored) coloredCount++;
+                }
+              }
+
+              // 長さから 0〜15 の数値を計算する
+              let iv = 0;
+              if (firstX !== -1 && lastX !== -1) {
+                const totalLength = lastX - firstX + 1;
+                const ratio = coloredCount / totalLength;
+
+                // ゲージの切れ目（白い隙間）を考慮した計算式
+                if (ratio > 0.90) { iv = 15; } // ほぼ満タンなら15
+                else { iv = Math.round(ratio * 15.5); }
+                if (iv > 15) iv = 15;
+                if (iv < 0) iv = 0;
+
+                // 【視覚的フィードバック】読み取った場所に緑色の線を引く
+                ctx.beginPath();
+                ctx.moveTo(firstX, y);
+                ctx.lineTo(lastX, y);
+                ctx.strokeStyle = '#00FF00';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+              }
+              ivs.push(iv);
+            }
+
+            // 5. 画面の入力欄に自動で反映させる
+            document.getElementById('ivAtk').value = ivs[0];
+            document.getElementById('ivDef').value = ivs[1];
+            document.getElementById('ivHp').value = ivs[2];
+
+            // 成功メッセージ（ポケモン名は手動で選んでもらう）
+            setTimeout(() => {
+              alert("✅ ゲージの読み取りに成功しました！\nポケモン名はドロップダウンから選択してください。");
+              checkRank(); // 自動で計算を実行
+            }, 100);
+
+          } else {
+            alert("⚠️ ゲージを検出できませんでした。別の画像をお試しください。");
           }
         };
-        tempImg.src = e.target.result;
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
+    // ▲ 読み取り処理ここまで ▲
 
     // --- 計算ロジック（そのまま） ---
     const cpmTable = [
