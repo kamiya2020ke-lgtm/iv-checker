@@ -3,144 +3,168 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link rel="manifest" href="manifest.json">
-  <title>個体値チェッカー</title>
+  <title>GBL順位チェッカー(テスト)</title>
   <style>
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-      padding: 20px; 
-      background-color: #f0f2f5;
-      color: #333;
-    }
-    .container {
-      max-width: 400px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #4CAF50;
-      margin-top: 0;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-      font-size: 14px;
-    }
-    input { 
-      font-size: 16px; 
-      padding: 12px; 
-      width: 100%; 
-      box-sizing: border-box; 
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    button { 
-      font-size: 16px; 
-      padding: 15px; 
-      width: 100%; 
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button:active {
-      background-color: #45a049;
-    }
-    #resultArea {
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #e8f5e9;
-      border-radius: 8px;
-      display: none;
-    }
-    .install-banner {
-      display: none;
-      background: #ff9800;
-      color: white;
-      padding: 10px;
-      text-align: center;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 14px;
-    }
+    body { font-family: -apple-system, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
+    .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #1976D2; font-size: 24px; margin-top: 0; }
+    .form-group { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    label { font-weight: bold; width: 40%; }
+    input { font-size: 16px; padding: 8px; width: 50%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
+    button { font-size: 16px; padding: 15px; width: 100%; background-color: #1976D2; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    button:active { background-color: #1565C0; }
+    #resultArea { margin-top: 20px; padding: 15px; background-color: #E3F2FD; border-radius: 8px; display: none; }
+    .rank-text { font-size: 24px; font-weight: bold; color: #D32F2F; text-align: center; margin: 10px 0; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="installBanner" class="install-banner">
-      💡 Safariの「共有」ボタンから「ホーム画面に追加」すると、オフラインアプリとして使えます！
-    </div>
-
-    <h1>IV Checker</h1>
+    <h1>GBLチェッカー<br><small>(マリルリ・スーパー用)</small></h1>
+    
+    <p style="font-size: 14px; color: #666; text-align: center;">個体値 (0〜15) を入力してください</p>
     
     <div class="form-group">
-      <label for="cpInput">CP</label>
-      <input type="number" id="cpInput" placeholder="例: 1500" pattern="[0-9]*">
+      <label>攻撃 (ATK)</label>
+      <input type="number" id="ivAtk" min="0" max="15" value="0">
     </div>
-    
     <div class="form-group">
-      <label for="hpInput">HP</label>
-      <input type="number" id="hpInput" placeholder="例: 120" pattern="[0-9]*">
+      <label>防御 (DEF)</label>
+      <input type="number" id="ivDef" min="0" max="15" value="15">
+    </div>
+    <div class="form-group">
+      <label>HP</label>
+      <input type="number" id="ivHp" min="0" max="15" value="15">
     </div>
     
-    <button onclick="calculate()">計算する</button>
+    <button onclick="checkRank()">順位を計算する</button>
     
     <div id="resultArea">
-      <h3 style="margin-top:0; color:#2e7d32;">計算結果</h3>
-      <p id="resultText"></p>
+      <h3 style="margin-top:0; color:#1565C0; text-align: center;">スーパーリーグ評価</h3>
+      <div id="resultText"></div>
     </div>
   </div>
 
   <script>
-    // サービスワーカーの登録
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(function(registration) {
-            console.log('オフライン対応完了 (ServiceWorker登録成功)');
-          })
-          .catch(function(err) {
-            console.log('ServiceWorker登録失敗: ', err);
-          });
-      });
-    }
+    // --- 1. 基礎データ ---
+    // マリルリの種族値
+    const BASE_ATK = 112;
+    const BASE_DEF = 152;
+    const BASE_HP = 225;
+    
+    // PL1〜51までのCPM（CP Multiplier）の一部抜粋（マリルリのスーパーリーグ帯 PL30〜45付近を網羅）
+    // ※本来はPL1〜51の全100個のデータが必要ですが、今回は計算量とコード量を減らすため主要な帯域のみ持たせています。
+    const cpmTable = [
+      { level: 35.0, cpm: 0.76156384 }, { level: 35.5, cpm: 0.76465306 },
+      { level: 36.0, cpm: 0.76734914 }, { level: 36.5, cpm: 0.77032779 },
+      { level: 37.0, cpm: 0.77316186 }, { level: 37.5, cpm: 0.77604518 },
+      { level: 38.0, cpm: 0.77855325 }, { level: 38.5, cpm: 0.78135061 },
+      { level: 39.0, cpm: 0.78393529 }, { level: 39.5, cpm: 0.78665809 },
+      { level: 40.0, cpm: 0.79030001 }, { level: 40.5, cpm: 0.79462615 },
+      { level: 41.0, cpm: 0.79883501 }, { level: 41.5, cpm: 0.80302485 },
+      { level: 42.0, cpm: 0.80718870 }, { level: 42.5, cpm: 0.81132808 },
+      { level: 43.0, cpm: 0.81543886 }, { level: 43.5, cpm: 0.81952328 },
+      { level: 44.0, cpm: 0.82358055 }, { level: 44.5, cpm: 0.82761361 },
+      { level: 45.0, cpm: 0.83161646 }, { level: 45.5, cpm: 0.83559132 }
+    ];
 
-    // iOS Safariでスタンドアロンモード（アプリ化）されていない場合にバナーを表示
-    const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-    const isIos = () => {
-      const userAgent = window.navigator.userAgent.toLowerCase();
-      return /iphone|ipad|ipod/.test(userAgent);
-    };
-
-    if (isIos() && !isStandalone) {
-      document.getElementById('installBanner').style.display = 'block';
-    }
-
-    // 計算ロジック（プレースホルダー）
-    function calculate() {
-      const cp = document.getElementById('cpInput').value;
-      const hp = document.getElementById('hpInput').value;
-      const resultArea = document.getElementById('resultArea');
-      const resultText = document.getElementById('resultText');
+    // --- 2. 計算ロジック ---
+    function calculateGBLStats(ivA, ivD, ivH, targetCP = 1500) {
+      let bestStat = null;
       
-      if (!cp || !hp) {
-        alert('CPとHPを入力してください。');
+      // CP1500以下になる最大のレベル(CPM)を探す
+      for (let i = 0; i < cpmTable.length; i++) {
+        const cpm = cpmTable[i].cpm;
+        const level = cpmTable[i].level;
+        
+        const atk = BASE_ATK + ivA;
+        const def = BASE_DEF + ivD;
+        const hp = BASE_HP + ivH;
+        
+        // CP計算式
+        const cp = Math.floor(Math.max(10, (atk * Math.sqrt(def) * Math.sqrt(hp) * Math.pow(cpm, 2)) / 10));
+        
+        if (cp <= targetCP) {
+          // 実数値を計算（HPのみ切り捨て）
+          const realAtk = atk * cpm;
+          const realDef = def * cpm;
+          const realHp = Math.floor(hp * cpm);
+          const statProduct = realAtk * realDef * realHp;
+          
+          bestStat = { level, cp, statProduct, ivA, ivD, ivH };
+        } else {
+          // CP1500を超えたら探索終了
+          break;
+        }
+      }
+      return bestStat;
+    }
+
+    // 全4096通りのランキングを生成
+    let rankingCache = null;
+    function getRanking() {
+      if (rankingCache) return rankingCache; // 計算済みなら使い回す
+      
+      const ranks = [];
+      for (let a = 0; a <= 15; a++) {
+        for (let d = 0; d <= 15; d++) {
+          for (let h = 0; h <= 15; h++) {
+            const stat = calculateGBLStats(a, d, h, 1500);
+            if (stat) ranks.push(stat);
+          }
+        }
+      }
+      // ステータス積(statProduct)が高い順に並び替え
+      ranks.sort((a, b) => b.statProduct - a.statProduct);
+      rankingCache = ranks;
+      return ranks;
+    }
+
+    // --- 3. 画面表示処理 ---
+    function checkRank() {
+      const a = parseInt(document.getElementById('ivAtk').value);
+      const d = parseInt(document.getElementById('ivDef').value);
+      const h = parseInt(document.getElementById('ivHp').value);
+      
+      if (isNaN(a) || isNaN(d) || isNaN(h) || a < 0 || a > 15 || d < 0 || d > 15 || h < 0 || h > 15) {
+        alert("0〜15の数字を入力してください");
         return;
       }
+
+      // ランキングを取得
+      const ranks = getRanking();
       
+      // 入力された個体値が何位かを探す
+      let myRank = -1;
+      let myStat = null;
+      for (let i = 0; i < ranks.length; i++) {
+        if (ranks[i].ivA === a && ranks[i].ivD === d && ranks[i].ivH === h) {
+          myRank = i + 1; // 配列は0番目から始まるので+1する
+          myStat = ranks[i];
+          break;
+        }
+      }
+
+      // 画面に表示
+      const resultArea = document.getElementById('resultArea');
+      const resultText = document.getElementById('resultText');
       resultArea.style.display = 'block';
-      resultText.innerHTML = `入力されたCP: <b>${cp}</b><br>入力されたHP: <b>${hp}</b><br><br><small>※ここに本格的な個体値逆算ロジックを追加します。</small>`;
+      
+      if (myStat) {
+        // 全体の何%の順位か（上位〇〇%）
+        const percentile = ((myRank / 4096) * 100).toFixed(1);
+        
+        resultText.innerHTML = `
+          <div class="rank-text">${myRank} 位 <span style="font-size:16px; color:#666;">/ 4096通り</span></div>
+          <p style="text-align:center; margin-top:0;">(上位 ${percentile} %)</p>
+          <hr style="border:0; border-top:1px dashed #ccc;">
+          <ul style="line-height:1.8; color:#444;">
+            <li>到達CP: <b>${myStat.cp}</b> (Lv ${myStat.level})</li>
+            <li>ステータス積: <b>${Math.round(myStat.statProduct).toLocaleString()}</b></li>
+          </ul>
+        `;
+      } else {
+        resultText.innerHTML = `<p style="color:red;">計算エラーが発生しました。</p>`;
+      }
     }
   </script>
 </body>
