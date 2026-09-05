@@ -89,7 +89,7 @@
             const targetWidth = 500;
             const scale = targetWidth / img.width;
             canvas.width = targetWidth;
-            canvas.height = Math.floor(img.height * scale); // 整数化の修正
+            canvas.height = Math.floor(img.height * scale);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             
             canvas.style.display = 'block';
@@ -100,7 +100,6 @@
             const imageData = ctx.getImageData(0, 0, width, height);
             const data = imageData.data;
 
-            // スタンプを避けて 15%〜60% の範囲をチェック
             const startX = Math.floor(width * 0.15);
             const endX = Math.floor(width * 0.60);
             const startY = Math.floor(height * 0.5);
@@ -114,8 +113,10 @@
                 const i = (y * width + x) * 4;
                 const r = data[i], g = data[i+1], b = data[i+2];
 
-                const isColored = (r > 180 && b < 120 && (r - b) > 40);
-                const isGray = (r > 160 && r < 240 && Math.abs(r-g) < 20 && Math.abs(g-b) < 20);
+                const isValorOrInstinct = (r > 180 && b < 120 && (r - b) > 40);
+                const isMystic = (b > 180 && r < 120 && (b - r) > 40);
+                const isColored = isValorOrInstinct || isMystic;
+                const isGray = (r > 150 && r < 240 && Math.abs(r-g) < 25 && Math.abs(g-b) < 25);
 
                 if (isColored || isGray) hits++;
               }
@@ -145,38 +146,42 @@
 
             let ivs = [];
             if (peaks.length >= 3) {
-              const targetPeaks = peaks.slice(-3); // 攻撃、防御、HP
+              const targetPeaks = peaks.slice(-3);
 
               for (let p = 0; p < targetPeaks.length; p++) {
                 const y = targetPeaks[p];
-                let firstX = -1, lastX = -1, coloredCount = 0;
+                let firstX = -1, lastX = -1, lastColoredX = -1;
 
                 for (let x = startX; x < width * 0.6; x++) {
                   const i = (y * width + x) * 4;
                   const r = data[i], g = data[i+1], b = data[i+2];
-                  const isColored = (r > 180 && b < 120 && (r - b) > 40);
-                  const isGray = (r > 160 && r < 240 && Math.abs(r-g) < 20 && Math.abs(g-b) < 20);
+                  const isValorOrInstinct = (r > 180 && b < 120 && (r - b) > 40);
+                  const isMystic = (b > 180 && r < 120 && (b - r) > 40);
+                  const isColored = isValorOrInstinct || isMystic;
+                  const isGray = (r > 150 && r < 240 && Math.abs(r-g) < 25 && Math.abs(g-b) < 25);
 
                   if (isColored || isGray) {
                     if (firstX === -1) firstX = x;
                     lastX = x;
-                    if (isColored) coloredCount++;
+                    if (isColored) lastColoredX = x;
                   }
                 }
 
                 let iv = 0;
                 if (firstX !== -1 && lastX !== -1) {
-                  const totalLength = lastX - firstX + 1;
-                  const ratio = coloredCount / totalLength;
-
-                  if (ratio > 0.90) { iv = 15; } 
-                  else { iv = Math.round(ratio * 15.5); }
+                  if (lastColoredX === -1) {
+                    iv = 0;
+                  } else {
+                    const ratio = (lastColoredX - firstX) / (lastX - firstX);
+                    iv = Math.round(ratio * 15);
+                  }
+                  
                   if (iv > 15) iv = 15;
                   if (iv < 0) iv = 0;
 
                   ctx.beginPath();
                   ctx.moveTo(firstX, y);
-                  ctx.lineTo(lastX, y);
+                  ctx.lineTo(lastColoredX !== -1 ? lastColoredX : firstX, y);
                   ctx.strokeStyle = '#00FF00';
                   ctx.lineWidth = 4;
                   ctx.stroke();
@@ -189,7 +194,6 @@
               document.getElementById('ivHp').value = ivs[2];
 
               setTimeout(() => {
-                alert("✅ ゲージの読み取りに成功しました！\nポケモン名はドロップダウンから選択してください。");
                 checkRank();
               }, 100);
 
@@ -205,19 +209,19 @@
       reader.readAsDataURL(file);
     }
 
-    // --- 計算ロジック (完全版CPMデータ) ---
     const cpmTable = [
-      0.094, 0.13513743, 0.16639787, 0.19265091, 0.21573247, 0.23657266, 0.25572005, 0.27353038, 0.29024988, 0.30605737, 
-      0.3210876, 0.33544503, 0.34921268, 0.36245775, 0.37523559, 0.3875924, 0.39956728, 0.41119355, 0.42250001, 0.43292641, 
-      0.44310755, 0.45305995, 0.46279839, 0.47233608, 0.48168495, 0.4908558, 0.49985844, 0.50870176, 0.51739395, 0.52594251, 
-      0.53435433, 0.54263576, 0.55079269, 0.55883057, 0.56675452, 0.57456915, 0.58227891, 0.58988791, 0.59740001, 0.60481881, 
-      0.61215729, 0.61939936, 0.62656713, 0.63364453, 0.64065295, 0.64757642, 0.65443206, 0.6612148, 0.667934, 0.67457753, 
-      0.68116492, 0.68768064, 0.69414365, 0.70054287, 0.70688421, 0.71316499, 0.71939909, 0.72557155, 0.7317, 0.73474101, 
-      0.73776948, 0.74078557, 0.74378943, 0.74678121, 0.74976104, 0.75272908, 0.75568551, 0.75863037, 0.76156384, 0.76448606, 
-      0.76739717, 0.77029726, 0.7731865, 0.77606496, 0.77893275, 0.78179005, 0.78463697, 0.78747357, 0.79030001, 0.79462615, 
-      0.79883501, 0.80302485, 0.8071887, 0.81132808, 0.81543886, 0.81952328, 0.82358055, 0.82761361, 0.83161646, 0.83559132, 
-      0.83953835, 0.84345759, 0.84734898, 0.85121255, 0.85504825, 0.85885623, 0.86263623, 0.86638848, 0.8701128, 0.87380921, 
-      0.87747769
+      0.094, 0.135137432, 0.16639787, 0.192650919, 0.215732473, 0.236572661, 0.25572005, 0.273530381, 0.29024988, 
+      0.306057377, 0.3210876, 0.335445036, 0.34921268, 0.362457751, 0.37523559, 0.387592406, 0.39956728, 0.411193551, 
+      0.42250001, 0.432926419, 0.44310755, 0.453059958, 0.46279839, 0.472336083, 0.48168495, 0.4908558, 0.49985844, 
+      0.508701765, 0.51739395, 0.525942511, 0.53435433, 0.542635767, 0.55079269, 0.558830576, 0.56675452, 0.574569153, 
+      0.58227891, 0.589887907, 0.59740001, 0.604818814, 0.61215729, 0.619399365, 0.62656713, 0.633644533, 0.64065295, 
+      0.647576426, 0.65443206, 0.661214806, 0.667934, 0.674577537, 0.68116492, 0.687680648, 0.69414365, 0.70054287, 
+      0.70688421, 0.713164996, 0.71939909, 0.725571552, 0.7317, 0.734741009, 0.73776948, 0.740785574, 0.74378943, 
+      0.746781211, 0.74976104, 0.752729087, 0.75568551, 0.758630378, 0.76156384, 0.764486065, 0.76739717, 0.770297266, 
+      0.7731865, 0.776064962, 0.77893275, 0.781790055, 0.78463697, 0.787473578, 0.79030001, 0.79280396, 0.79530001, 
+      0.79780396, 0.80030001, 0.80280396, 0.80530001, 0.80780396, 0.81030001, 0.81280396, 0.81530001, 0.81780396, 
+      0.82030001, 0.82280396, 0.82530001, 0.82780396, 0.83030001, 0.83280396, 0.83530001, 0.83780396, 0.84030001, 
+      0.84280396, 0.84530001
     ];
 
     let currentRankingCache = { pokemon: "", ranks: [] };
@@ -231,6 +235,7 @@
         const atk = baseAtk + ivA;
         const def = baseDef + ivD;
         const hp = baseHp + ivH;
+        
         const cp = Math.max(10, Math.floor((atk * Math.sqrt(def) * Math.sqrt(hp) * Math.pow(cpm, 2)) / 10));
         
         if (cp <= targetCP) {
