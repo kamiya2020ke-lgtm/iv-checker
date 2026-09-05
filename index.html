@@ -100,34 +100,37 @@
             const imageData = ctx.getImageData(0, 0, width, height);
             const data = imageData.data;
 
-            const startX = Math.floor(width * 0.15);
-            const endX = Math.floor(width * 0.60);
-            const startY = Math.floor(height * 0.5);
+            const startY = Math.floor(height * 0.45);
             const endY = Math.floor(height * 0.95);
+            
+            // 1. スタンプを確実に避けるため、X=35% から X=85% の範囲で調べる
+            const scanStartX = Math.floor(width * 0.35);
+            const scanEndX = Math.floor(width * 0.85);
 
             let rowHits = new Array(height).fill(0);
 
             for (let y = startY; y < endY; y++) {
               let hits = 0;
-              for (let x = startX; x < endX; x++) {
+              for (let x = scanStartX; x < scanEndX; x++) {
                 const i = (y * width + x) * 4;
                 const r = data[i], g = data[i+1], b = data[i+2];
-
-                const isValorOrInstinct = (r > 180 && b < 120 && (r - b) > 40);
-                const isMystic = (b > 180 && r < 120 && (b - r) > 40);
-                const isColored = isValorOrInstinct || isMystic;
-                const isGray = (r > 150 && r < 240 && Math.abs(r-g) < 25 && Math.abs(g-b) < 25);
-
-                if (isColored || isGray) hits++;
+                const max = Math.max(r,g,b), min = Math.min(r,g,b);
+                
+                // 赤・黄・青どのチームの色でも反応する
+                const isTeam = (r > 160 && b < 140 && r - b > 30) || (b > 160 && r < 140 && b - r > 30);
+                const isGray = (max > 130 && max < 245 && max - min < 25);
+                
+                if (isTeam || isGray) hits++;
               }
               rowHits[y] = hits;
             }
 
+            // 2. 文字を排除：「横幅の20%以上」長く連続している線だけをゲージと認定する
             let peaks = [];
             let inPeak = false;
             let currentPeakY = 0;
             let currentPeakMaxHits = 0;
-            const minBarWidth = width * 0.15; 
+            const minBarWidth = width * 0.20; 
 
             for (let y = startY; y < endY; y++) {
               if (rowHits[y] > minBarWidth) {
@@ -144,64 +147,81 @@
               }
             }
 
+            if (peaks.length < 3) {
+              throw new Error("ゲージが正しく見つかりません。");
+            }
+
+            // 3. 一番下のHPゲージを「基準の定規」にする
+            const targetPeaks = peaks.slice(-3); // 攻撃、防御、HP
+            const hpY = targetPeaks[2]; 
+
+            let firstX = -1, lastX = -1;
+            // HPゲージはスタンプと被らないので広く(10%〜90%)調べる
+            for (let x = Math.floor(width * 0.1); x < Math.floor(width * 0.9); x++) {
+              const i = (hpY * width + x) * 4;
+              const r = data[i], g = data[i+1], b = data[i+2];
+              const max = Math.max(r,g,b), min = Math.min(r,g,b);
+              const isTeam = (r > 160 && b < 140 && r - b > 30) || (b > 160 && r < 140 && b - r > 30);
+              const isGray = (max > 130 && max < 245 && max - min < 25);
+              
+              if (isTeam || isGray) {
+                if (firstX === -1) firstX = x;
+                lastX = x;
+              }
+            }
+
+            if (firstX === -1 || lastX === -1) throw new Error("基準ゲージの測定に失敗しました。");
+
+            // 4. 定規(firstX ~ lastX)の上で、どこまで色が付いているか「先端」を探す
             let ivs = [];
-            if (peaks.length >= 3) {
-              const targetPeaks = peaks.slice(-3);
+            for (let p = 0; p < targetPeaks.length; p++) {
+              const y = targetPeaks[p];
+              let lastColoredX = -1;
 
-              for (let p = 0; p < targetPeaks.length; p++) {
-                const y = targetPeaks[p];
-                let firstX = -1, lastX = -1, lastColoredX = -1;
-
-                for (let x = startX; x < width * 0.6; x++) {
-                  const i = (y * width + x) * 4;
-                  const r = data[i], g = data[i+1], b = data[i+2];
-                  const isValorOrInstinct = (r > 180 && b < 120 && (r - b) > 40);
-                  const isMystic = (b > 180 && r < 120 && (b - r) > 40);
-                  const isColored = isValorOrInstinct || isMystic;
-                  const isGray = (r > 150 && r < 240 && Math.abs(r-g) < 25 && Math.abs(g-b) < 25);
-
-                  if (isColored || isGray) {
-                    if (firstX === -1) firstX = x;
-                    lastX = x;
-                    if (isColored) lastColoredX = x;
-                  }
+              for (let x = firstX; x <= lastX; x++) {
+                const i = (y * width + x) * 4;
+                const r = data[i], g = data[i+1], b = data[i+2];
+                const isTeam = (r > 160 && b < 140 && r - b > 30) || (b > 160 && r < 140 && b - r > 30);
+                
+                if (isTeam) {
+                  lastColoredX = x;
                 }
-
-                let iv = 0;
-                if (firstX !== -1 && lastX !== -1) {
-                  if (lastColoredX === -1) {
-                    iv = 0;
-                  } else {
-                    const ratio = (lastColoredX - firstX) / (lastX - firstX);
-                    iv = Math.round(ratio * 15);
-                  }
-                  
-                  if (iv > 15) iv = 15;
-                  if (iv < 0) iv = 0;
-
-                  ctx.beginPath();
-                  ctx.moveTo(firstX, y);
-                  ctx.lineTo(lastColoredX !== -1 ? lastColoredX : firstX, y);
-                  ctx.strokeStyle = '#00FF00';
-                  ctx.lineWidth = 4;
-                  ctx.stroke();
-                }
-                ivs.push(iv);
               }
 
-              document.getElementById('ivAtk').value = ivs[0];
-              document.getElementById('ivDef').value = ivs[1];
-              document.getElementById('ivHp').value = ivs[2];
+              let iv = 0;
+              if (lastColoredX === -1) {
+                iv = 0;
+              } else {
+                // ピクセル数ではなく、確実な「座標の割合」で算出する
+                let ratio = (lastColoredX - firstX) / (lastX - firstX);
+                if (ratio > 0.95) iv = 15; // ほぼ満タンなら15
+                else iv = Math.round(ratio * 15);
+              }
+              
+              if (iv > 15) iv = 15;
+              if (iv < 0) iv = 0;
 
-              setTimeout(() => {
-                checkRank();
-              }, 100);
+              ivs.push(iv);
 
-            } else {
-              alert(`⚠️ ゲージが3本見つかりませんでした。(検出数: ${peaks.length})`);
+              // 読み取った「先端」まで緑色の線を引く
+              ctx.beginPath();
+              ctx.moveTo(firstX, y);
+              ctx.lineTo(lastColoredX !== -1 ? lastColoredX : firstX, y);
+              ctx.strokeStyle = '#00FF00';
+              ctx.lineWidth = 4;
+              ctx.stroke();
             }
+
+            document.getElementById('ivAtk').value = ivs[0];
+            document.getElementById('ivDef').value = ivs[1];
+            document.getElementById('ivHp').value = ivs[2];
+
+            setTimeout(() => {
+              checkRank();
+            }, 100);
+
           } catch (error) {
-            alert("❌ 画像の処理中にエラーが発生しました:\n" + error.message);
+            alert("❌ エラーが発生しました:\n" + error.message);
           }
         };
         img.src = e.target.result;
