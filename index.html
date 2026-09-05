@@ -10,9 +10,9 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
     .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     h1 { text-align: center; color: #1976D2; font-size: 24px; margin-top: 0; }
-    .image-upload-area { border: 2px dashed #1976D2; border-radius: 8px; padding: 20px; text-align: center; background-color: #E3F2FD; cursor: pointer; margin-bottom: 20px; position: relative; }
+    .image-upload-area { border: 2px dashed #1976D2; border-radius: 8px; padding: 20px; text-align: center; background-color: #E3F2FD; cursor: pointer; margin-bottom: 20px; position: relative; overflow: hidden; }
     .image-upload-area p { color: #1565C0; font-weight: bold; margin: 0; line-height: 1.5; }
-    #scanCanvas { max-width: 100%; border-radius: 4px; display: none; margin-top: 10px; border: 1px solid #ccc; }
+    #scanCanvas { max-width: 100%; border-radius: 4px; display: none; margin-top: 10px; border: 1px solid #ccc; width: 100%; }
     .form-group { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
     label { font-weight: bold; width: 40%; font-size: 14px; }
     input[type="number"], select { font-size: 16px; padding: 8px; width: 50%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
@@ -86,6 +86,7 @@
         const img = new Image();
         img.onload = function() {
           try {
+            // 解像度を揃える
             const targetWidth = 500;
             const scale = targetWidth / img.width;
             canvas.width = targetWidth;
@@ -100,118 +101,126 @@
             const imageData = ctx.getImageData(0, 0, width, height);
             const data = imageData.data;
 
-            const startY = Math.floor(height * 0.45);
+            // 色を判定する関数（白と黒を確実に除外、各チーム色を広めに拾う）
+            function isBarColor(r, g, b) {
+              const max = Math.max(r, g, b), min = Math.min(r, g, b);
+              // ゲージの背景（グレー）
+              const isGray = (max > 140 && max < 235 && max - min < 25);
+              // チームカラー（赤・黄・青）
+              const isRed = (r > 180 && g < 130 && b < 130);
+              const isYellow = (r > 180 && g > 150 && b < 100);
+              const isBlue = (b > 180 && r < 130 && g > 100);
+              const isColored = isRed || isYellow || isBlue;
+              return { isGray: isGray, isColored: isColored, any: isGray || isColored };
+            }
+
+            // 1. 横幅の40%以上を占める「連続した太い線」を探す（文字を排除するため）
+            const startY = Math.floor(height * 0.4);
             const endY = Math.floor(height * 0.95);
-            
-            // 1. スタンプを確実に避けるため、X=35% から X=85% の範囲で調べる
-            const scanStartX = Math.floor(width * 0.35);
+            const scanStartX = Math.floor(width * 0.25); // 左のスタンプを避ける
             const scanEndX = Math.floor(width * 0.85);
 
             let rowHits = new Array(height).fill(0);
-
             for (let y = startY; y < endY; y++) {
               let hits = 0;
               for (let x = scanStartX; x < scanEndX; x++) {
                 const i = (y * width + x) * 4;
-                const r = data[i], g = data[i+1], b = data[i+2];
-                const max = Math.max(r,g,b), min = Math.min(r,g,b);
-                
-                // 赤・黄・青どのチームの色でも反応する
-                const isTeam = (r > 160 && b < 140 && r - b > 30) || (b > 160 && r < 140 && b - r > 30);
-                const isGray = (max > 130 && max < 245 && max - min < 25);
-                
-                if (isTeam || isGray) hits++;
+                if (isBarColor(data[i], data[i+1], data[i+2]).any) {
+                  hits++;
+                }
               }
               rowHits[y] = hits;
             }
 
-            // 2. 文字を排除：「横幅の20%以上」長く連続している線だけをゲージと認定する
-            let peaks = [];
-            let inPeak = false;
-            let currentPeakY = 0;
-            let currentPeakMaxHits = 0;
-            const minBarWidth = width * 0.20; 
-
+            let validYs = [];
+            // ピクセルの「密度」が閾値を超えたY座標を「ゲージがある場所」とみなす
+            const densityThreshold = (scanEndX - scanStartX) * 0.4; 
             for (let y = startY; y < endY; y++) {
-              if (rowHits[y] > minBarWidth) {
-                if (!inPeak) {
-                  inPeak = true;
-                  currentPeakMaxHits = rowHits[y];
-                  currentPeakY = y;
-                } else if (rowHits[y] > currentPeakMaxHits) {
-                  currentPeakMaxHits = rowHits[y];
-                  currentPeakY = y;
+              if (rowHits[y] > densityThreshold) validYs.push(y);
+            }
+
+            // 見つかったY座標を3つのグループ（バー）にまとめる
+            let peaks = [];
+            if (validYs.length > 0) {
+              let cluster = [validYs[0]];
+              for (let j = 1; j < validYs.length; j++) {
+                if (validYs[j] - validYs[j-1] < 12) {
+                  cluster.push(validYs[j]);
+                } else {
+                  peaks.push(Math.floor(cluster.reduce((a,b)=>a+b)/cluster.length));
+                  cluster = [validYs[j]];
                 }
-              } else {
-                if (inPeak) { peaks.push(currentPeakY); inPeak = false; }
               }
+              peaks.push(Math.floor(cluster.reduce((a,b)=>a+b)/cluster.length));
             }
 
-            if (peaks.length < 3) {
-              throw new Error("ゲージが正しく見つかりません。");
-            }
-
-            // 3. 一番下のHPゲージを「基準の定規」にする
+            if (peaks.length < 3) throw new Error("ゲージ特有の「横に長い線」が見つかりませんでした。");
             const targetPeaks = peaks.slice(-3); // 攻撃、防御、HP
-            const hpY = targetPeaks[2]; 
 
-            let firstX = -1, lastX = -1;
-            // HPゲージはスタンプと被らないので広く(10%〜90%)調べる
-            for (let x = Math.floor(width * 0.1); x < Math.floor(width * 0.9); x++) {
-              const i = (hpY * width + x) * 4;
-              const r = data[i], g = data[i+1], b = data[i+2];
-              const max = Math.max(r,g,b), min = Math.min(r,g,b);
-              const isTeam = (r > 160 && b < 140 && r - b > 30) || (b > 160 && r < 140 && b - r > 30);
-              const isGray = (max > 130 && max < 245 && max - min < 25);
-              
-              if (isTeam || isGray) {
-                if (firstX === -1) firstX = x;
-                lastX = x;
+            // 2. ゲージ全体の左右の端（物理的な長さ）を特定する
+            let globalFirstX = width;
+            let globalLastX = 0;
+
+            for (let y of targetPeaks) {
+              // 左端を探す
+              for (let x = Math.floor(width * 0.15); x < Math.floor(width * 0.5); x++) {
+                const i = (y * width + x) * 4;
+                if (isBarColor(data[i], data[i+1], data[i+2]).any) {
+                  if (x < globalFirstX) globalFirstX = x;
+                  break;
+                }
+              }
+              // 右端を探す
+              for (let x = Math.floor(width * 0.95); x > Math.floor(width * 0.5); x--) {
+                const i = (y * width + x) * 4;
+                if (isBarColor(data[i], data[i+1], data[i+2]).any) {
+                  if (x > globalLastX) globalLastX = x;
+                  break;
+                }
               }
             }
 
-            if (firstX === -1 || lastX === -1) throw new Error("基準ゲージの測定に失敗しました。");
+            if (globalFirstX >= globalLastX) throw new Error("ゲージの端を特定できませんでした。");
 
-            // 4. 定規(firstX ~ lastX)の上で、どこまで色が付いているか「先端」を探す
+            // 3. 各ゲージごとに「色が付いている一番右のピクセル」を探す
             let ivs = [];
-            for (let p = 0; p < targetPeaks.length; p++) {
-              const y = targetPeaks[p];
-              let lastColoredX = -1;
-
-              for (let x = firstX; x <= lastX; x++) {
+            for (let y of targetPeaks) {
+              let coloredEndX = globalFirstX; // 初期値は0
+              for (let x = globalLastX; x >= globalFirstX; x--) {
                 const i = (y * width + x) * 4;
-                const r = data[i], g = data[i+1], b = data[i+2];
-                const isTeam = (r > 160 && b < 140 && r - b > 30) || (b > 160 && r < 140 && b - r > 30);
-                
-                if (isTeam) {
-                  lastColoredX = x;
+                if (isBarColor(data[i], data[i+1], data[i+2]).isColored) {
+                  coloredEndX = x;
+                  break;
                 }
               }
 
+              // 割合から0〜15の数値を出す
+              let ratio = (coloredEndX - globalFirstX) / (globalLastX - globalFirstX);
               let iv = 0;
-              if (lastColoredX === -1) {
-                iv = 0;
-              } else {
-                // ピクセル数ではなく、確実な「座標の割合」で算出する
-                let ratio = (lastColoredX - firstX) / (lastX - firstX);
-                if (ratio > 0.95) iv = 15; // ほぼ満タンなら15
-                else iv = Math.round(ratio * 15);
-              }
-              
-              if (iv > 15) iv = 15;
-              if (iv < 0) iv = 0;
+              if (ratio > 0.95) iv = 15; // ほぼ満タンなら15確定
+              else if (ratio <= 0.05) iv = 0; // ほぼ空なら0
+              else iv = Math.round(ratio * 15);
 
+              iv = Math.max(0, Math.min(15, iv));
               ivs.push(iv);
 
-              // 読み取った「先端」まで緑色の線を引く
+              // 画面に「アプリがどう読み取ったか」を描画する
               ctx.beginPath();
-              ctx.moveTo(firstX, y);
-              ctx.lineTo(lastColoredX !== -1 ? lastColoredX : firstX, y);
+              ctx.moveTo(globalFirstX, y);
+              ctx.lineTo(globalLastX, y);
+              ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+              ctx.lineWidth = 6;
+              ctx.stroke();
+
+              ctx.beginPath();
+              ctx.moveTo(globalFirstX, y);
+              ctx.lineTo(coloredEndX, y);
               ctx.strokeStyle = '#00FF00';
               ctx.lineWidth = 4;
               ctx.stroke();
             }
 
+            // フォームに反映
             document.getElementById('ivAtk').value = ivs[0];
             document.getElementById('ivDef').value = ivs[1];
             document.getElementById('ivHp').value = ivs[2];
@@ -221,7 +230,7 @@
             }, 100);
 
           } catch (error) {
-            alert("❌ エラーが発生しました:\n" + error.message);
+            alert("❌ 画像の解析に失敗しました:\n" + error.message);
           }
         };
         img.src = e.target.result;
@@ -248,14 +257,12 @@
 
     function calculateGBLStats(baseAtk, baseDef, baseHp, ivA, ivD, ivH, targetCP = 1500) {
       let bestStat = null;
-      
       for (let i = 0; i < cpmTable.length; i++) {
         const cpm = cpmTable[i];
         const level = 1.0 + (i * 0.5);
         const atk = baseAtk + ivA;
         const def = baseDef + ivD;
         const hp = baseHp + ivH;
-        
         const cp = Math.max(10, Math.floor((atk * Math.sqrt(def) * Math.sqrt(hp) * Math.pow(cpm, 2)) / 10));
         
         if (cp <= targetCP) {
@@ -263,9 +270,7 @@
           const realDef = def * cpm;
           const realHp = Math.floor(hp * cpm);
           bestStat = { level, cp, statProduct: realAtk * realDef * realHp, ivA, ivD, ivH };
-        } else {
-          break;
-        }
+        } else { break; }
       }
       return bestStat;
     }
