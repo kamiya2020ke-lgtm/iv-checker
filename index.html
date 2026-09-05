@@ -7,53 +7,75 @@
   <title>GBL順位チェッカー</title>
   <script src="pokedex.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; margin: 0; }
     .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #1976D2; font-size: 24px; margin-top: 0; }
-    .image-upload-area { border: 2px dashed #1976D2; border-radius: 8px; padding: 20px; text-align: center; background-color: #E3F2FD; cursor: pointer; margin-bottom: 20px; position: relative; overflow: hidden; }
-    .image-upload-area p { color: #1565C0; font-weight: bold; margin: 0; line-height: 1.5; }
-    #scanCanvas { max-width: 100%; border-radius: 4px; display: none; margin-top: 10px; border: 1px solid #ccc; width: 100%; }
-    .form-group { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-    label { font-weight: bold; width: 40%; font-size: 14px; }
-    input[type="number"], select { font-size: 16px; padding: 8px; width: 50%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
-    button { font-size: 16px; padding: 15px; width: 100%; background-color: #1976D2; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    button:active { background-color: #1565C0; }
-    #resultArea { margin-top: 20px; padding: 15px; background-color: #E3F2FD; border-radius: 8px; display: none; }
-    .rank-text { font-size: 24px; font-weight: bold; color: #D32F2F; text-align: center; margin: 10px 0; }
+    h1 { text-align: center; color: #1976D2; font-size: 24px; margin-top: 0; margin-bottom: 20px; }
+    
+    .form-group { margin-bottom: 25px; }
+    .stat-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; font-size: 16px; color: #444; }
+    .stat-value { color: #f57c00; font-size: 18px; }
+    
+    select { font-size: 16px; padding: 10px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; margin-bottom: 20px; }
+    
+    /* ゲーム風の視覚的ゲージ */
+    .gauge-wrapper { width: 100%; height: 18px; background-color: #e0e0e0; border-radius: 9px; position: relative; overflow: hidden; margin-bottom: 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+    .gauge-fill { height: 100%; background-color: #ffa726; width: 100%; transition: width 0.15s ease-out; }
+    .gauge-divider { position: absolute; top: 0; bottom: 0; width: 4px; background-color: white; z-index: 2; }
+    .div-1 { left: 33.33%; }
+    .div-2 { left: 66.66%; }
+    
+    /* スライダー（つまみ）のスタイル */
+    input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin: 0; }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #ddd; border-radius: 4px; }
+    input[type=range]::-webkit-slider-thumb { height: 24px; width: 24px; border-radius: 50%; background: #1976D2; cursor: pointer; -webkit-appearance: none; margin-top: -8px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid white;}
+    
+    #resultArea { margin-top: 25px; padding: 20px; background-color: #E3F2FD; border-radius: 12px; display: none; border: 2px solid #BBDEFB;}
+    .rank-text { font-size: 32px; font-weight: bold; color: #D32F2F; text-align: center; margin: 10px 0; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>GBLチェッカー</h1>
     
-    <div class="image-upload-area" onclick="document.getElementById('fileInput').click()">
-      <p id="uploadText">📷 タップしてスクショを選択<br><small>（個体値のゲージを自動で読み取ります）</small></p>
-      <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="previewImage(event)">
-      <canvas id="scanCanvas"></canvas>
+    <label style="font-weight:bold; color:#444;">ポケモン選択</label>
+    <select id="pokemonSelect" onchange="checkRank()"></select>
+    
+    <!-- 攻撃ゲージ -->
+    <div class="form-group">
+      <div class="stat-header"><span>こうげき</span><span class="stat-value" id="valAtk">15</span></div>
+      <div class="gauge-wrapper">
+        <div class="gauge-fill" id="barAtk"></div>
+        <div class="gauge-divider div-1"></div>
+        <div class="gauge-divider div-2"></div>
+      </div>
+      <input type="range" id="ivAtk" min="0" max="15" value="15" oninput="updateGauge('Atk')">
     </div>
 
+    <!-- 防御ゲージ -->
     <div class="form-group">
-      <label>ポケモン選択</label>
-      <select id="pokemonSelect" onchange="clearResult()"></select>
+      <div class="stat-header"><span>ぼうぎょ</span><span class="stat-value" id="valDef">15</span></div>
+      <div class="gauge-wrapper">
+        <div class="gauge-fill" id="barDef"></div>
+        <div class="gauge-divider div-1"></div>
+        <div class="gauge-divider div-2"></div>
+      </div>
+      <input type="range" id="ivDef" min="0" max="15" value="15" oninput="updateGauge('Def')">
     </div>
-    
+
+    <!-- HPゲージ -->
     <div class="form-group">
-      <label>攻撃 (ATK)</label>
-      <input type="number" id="ivAtk" min="0" max="15" value="0">
+      <div class="stat-header"><span>HP</span><span class="stat-value" id="valHp">15</span></div>
+      <div class="gauge-wrapper">
+        <div class="gauge-fill" id="barHp"></div>
+        <div class="gauge-divider div-1"></div>
+        <div class="gauge-divider div-2"></div>
+      </div>
+      <input type="range" id="ivHp" min="0" max="15" value="15" oninput="updateGauge('Hp')">
     </div>
-    <div class="form-group">
-      <label>防御 (DEF)</label>
-      <input type="number" id="ivDef" min="0" max="15" value="15">
-    </div>
-    <div class="form-group">
-      <label>HP</label>
-      <input type="number" id="ivHp" min="0" max="15" value="15">
-    </div>
-    
-    <button onclick="checkRank()">順位を計算する</button>
     
     <div id="resultArea">
-      <h3 style="margin-top:0; color:#1565C0; text-align: center;">スーパーリーグ評価</h3>
+      <h3 style="margin-top:0; color:#1565C0; text-align: center;">スーパーリーグ順位</h3>
       <div id="resultText"></div>
     </div>
   </div>
@@ -71,171 +93,30 @@
         option.textContent = pokemonName;
         select.appendChild(option);
       }
+      // 初期描画
+      updateGauge('Atk');
+      updateGauge('Def');
+      updateGauge('Hp');
     };
 
-    function previewImage(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const canvas = document.getElementById('scanCanvas');
-      const ctx = canvas.getContext('2d');
-      const text = document.getElementById('uploadText');
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          try {
-            // 解像度を揃える
-            const targetWidth = 500;
-            const scale = targetWidth / img.width;
-            canvas.width = targetWidth;
-            canvas.height = Math.floor(img.height * scale);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
-            canvas.style.display = 'block';
-            text.style.display = 'none';
-
-            const width = canvas.width;
-            const height = canvas.height;
-            const imageData = ctx.getImageData(0, 0, width, height);
-            const data = imageData.data;
-
-            // 色を判定する関数（白と黒を確実に除外、各チーム色を広めに拾う）
-            function isBarColor(r, g, b) {
-              const max = Math.max(r, g, b), min = Math.min(r, g, b);
-              // ゲージの背景（グレー）
-              const isGray = (max > 140 && max < 235 && max - min < 25);
-              // チームカラー（赤・黄・青）
-              const isRed = (r > 180 && g < 130 && b < 130);
-              const isYellow = (r > 180 && g > 150 && b < 100);
-              const isBlue = (b > 180 && r < 130 && g > 100);
-              const isColored = isRed || isYellow || isBlue;
-              return { isGray: isGray, isColored: isColored, any: isGray || isColored };
-            }
-
-            // 1. 横幅の40%以上を占める「連続した太い線」を探す（文字を排除するため）
-            const startY = Math.floor(height * 0.4);
-            const endY = Math.floor(height * 0.95);
-            const scanStartX = Math.floor(width * 0.25); // 左のスタンプを避ける
-            const scanEndX = Math.floor(width * 0.85);
-
-            let rowHits = new Array(height).fill(0);
-            for (let y = startY; y < endY; y++) {
-              let hits = 0;
-              for (let x = scanStartX; x < scanEndX; x++) {
-                const i = (y * width + x) * 4;
-                if (isBarColor(data[i], data[i+1], data[i+2]).any) {
-                  hits++;
-                }
-              }
-              rowHits[y] = hits;
-            }
-
-            let validYs = [];
-            // ピクセルの「密度」が閾値を超えたY座標を「ゲージがある場所」とみなす
-            const densityThreshold = (scanEndX - scanStartX) * 0.4; 
-            for (let y = startY; y < endY; y++) {
-              if (rowHits[y] > densityThreshold) validYs.push(y);
-            }
-
-            // 見つかったY座標を3つのグループ（バー）にまとめる
-            let peaks = [];
-            if (validYs.length > 0) {
-              let cluster = [validYs[0]];
-              for (let j = 1; j < validYs.length; j++) {
-                if (validYs[j] - validYs[j-1] < 12) {
-                  cluster.push(validYs[j]);
-                } else {
-                  peaks.push(Math.floor(cluster.reduce((a,b)=>a+b)/cluster.length));
-                  cluster = [validYs[j]];
-                }
-              }
-              peaks.push(Math.floor(cluster.reduce((a,b)=>a+b)/cluster.length));
-            }
-
-            if (peaks.length < 3) throw new Error("ゲージ特有の「横に長い線」が見つかりませんでした。");
-            const targetPeaks = peaks.slice(-3); // 攻撃、防御、HP
-
-            // 2. ゲージ全体の左右の端（物理的な長さ）を特定する
-            let globalFirstX = width;
-            let globalLastX = 0;
-
-            for (let y of targetPeaks) {
-              // 左端を探す
-              for (let x = Math.floor(width * 0.15); x < Math.floor(width * 0.5); x++) {
-                const i = (y * width + x) * 4;
-                if (isBarColor(data[i], data[i+1], data[i+2]).any) {
-                  if (x < globalFirstX) globalFirstX = x;
-                  break;
-                }
-              }
-              // 右端を探す
-              for (let x = Math.floor(width * 0.95); x > Math.floor(width * 0.5); x--) {
-                const i = (y * width + x) * 4;
-                if (isBarColor(data[i], data[i+1], data[i+2]).any) {
-                  if (x > globalLastX) globalLastX = x;
-                  break;
-                }
-              }
-            }
-
-            if (globalFirstX >= globalLastX) throw new Error("ゲージの端を特定できませんでした。");
-
-            // 3. 各ゲージごとに「色が付いている一番右のピクセル」を探す
-            let ivs = [];
-            for (let y of targetPeaks) {
-              let coloredEndX = globalFirstX; // 初期値は0
-              for (let x = globalLastX; x >= globalFirstX; x--) {
-                const i = (y * width + x) * 4;
-                if (isBarColor(data[i], data[i+1], data[i+2]).isColored) {
-                  coloredEndX = x;
-                  break;
-                }
-              }
-
-              // 割合から0〜15の数値を出す
-              let ratio = (coloredEndX - globalFirstX) / (globalLastX - globalFirstX);
-              let iv = 0;
-              if (ratio > 0.95) iv = 15; // ほぼ満タンなら15確定
-              else if (ratio <= 0.05) iv = 0; // ほぼ空なら0
-              else iv = Math.round(ratio * 15);
-
-              iv = Math.max(0, Math.min(15, iv));
-              ivs.push(iv);
-
-              // 画面に「アプリがどう読み取ったか」を描画する
-              ctx.beginPath();
-              ctx.moveTo(globalFirstX, y);
-              ctx.lineTo(globalLastX, y);
-              ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-              ctx.lineWidth = 6;
-              ctx.stroke();
-
-              ctx.beginPath();
-              ctx.moveTo(globalFirstX, y);
-              ctx.lineTo(coloredEndX, y);
-              ctx.strokeStyle = '#00FF00';
-              ctx.lineWidth = 4;
-              ctx.stroke();
-            }
-
-            // フォームに反映
-            document.getElementById('ivAtk').value = ivs[0];
-            document.getElementById('ivDef').value = ivs[1];
-            document.getElementById('ivHp').value = ivs[2];
-
-            setTimeout(() => {
-              checkRank();
-            }, 100);
-
-          } catch (error) {
-            alert("❌ 画像の解析に失敗しました:\n" + error.message);
-          }
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+    // 視覚的ゲージと数値を連動させる関数
+    function updateGauge(stat) {
+      const val = document.getElementById('iv' + stat).value;
+      document.getElementById('val' + stat).textContent = val;
+      
+      // 15を100%としてバーの長さを計算
+      const percentage = (val / 15) * 100;
+      const bar = document.getElementById('bar' + stat);
+      bar.style.width = percentage + '%';
+      
+      // 色の変化（MAXなら赤っぽく、それ以外はオレンジ）
+      if (val == 15) {
+        bar.style.backgroundColor = '#f44336'; 
+      } else {
+        bar.style.backgroundColor = '#ffa726';
+      }
+      
+      checkRank(); // スライダーを動かすたびに自動で計算
     }
 
     const cpmTable = [
@@ -292,16 +173,16 @@
       return ranks;
     }
 
-    function clearResult() { document.getElementById('resultArea').style.display = 'none'; }
-
     function checkRank() {
       const selectedPokemon = document.getElementById('pokemonSelect').value;
       const a = parseInt(document.getElementById('ivAtk').value);
       const d = parseInt(document.getElementById('ivDef').value);
       const h = parseInt(document.getElementById('ivHp').value);
+      
       const ranks = getRanking(selectedPokemon);
       let myRank = -1;
       let myStat = null;
+      
       for (let i = 0; i < ranks.length; i++) {
         if (ranks[i].ivA === a && ranks[i].ivD === d && ranks[i].ivH === h) {
           myRank = i + 1; myStat = ranks[i]; break;
@@ -311,15 +192,16 @@
       const resultArea = document.getElementById('resultArea');
       const resultText = document.getElementById('resultText');
       resultArea.style.display = 'block';
+      
       if (myStat) {
         const percentile = ((myRank / 4096) * 100).toFixed(1);
         resultText.innerHTML = `
-          <div style="text-align:center; font-weight:bold; color:#555;">${selectedPokemon}</div>
+          <div style="text-align:center; font-weight:bold; color:#555; font-size:18px;">${selectedPokemon}</div>
           <div class="rank-text">${myRank} 位 <span style="font-size:16px; color:#666;">/ 4096</span></div>
-          <p style="text-align:center; margin-top:0;">(上位 ${percentile} %)</p>
-          <hr style="border:0; border-top:1px dashed #ccc;">
-          <ul style="line-height:1.8; color:#444;">
-            <li>到達CP: <b>${myStat.cp}</b> (Lv ${myStat.level})</li>
+          <p style="text-align:center; margin-top:0; color:#555;">(上位 ${percentile} %)</p>
+          <hr style="border:0; border-top:1px dashed #BBDEFB;">
+          <ul style="line-height:2.0; color:#333; padding-left:20px; font-size:16px;">
+            <li>CP: <b>${myStat.cp}</b> <span style="color:#777; font-size:14px;">(Lv ${myStat.level})</span></li>
             <li>ステータス積: <b>${Math.round(myStat.statProduct).toLocaleString()}</b></li>
           </ul>
         `;
