@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GBL順位チェッカー(テスト)</title>
+  <link rel="manifest" href="manifest.json">
+  <title>GBL順位チェッカー</title>
+  <script src="pokedex.js"></script>
+  <!-- ▼ Tesseract.js（文字認識ライブラリ）の読み込み ▼ -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
-    body { font-family: -apple-system, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
     .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     h1 { text-align: center; color: #1976D2; font-size: 24px; margin-top: 0; }
+    .image-upload-area { border: 2px dashed #1976D2; border-radius: 8px; padding: 20px; text-align: center; background-color: #E3F2FD; cursor: pointer; margin-bottom: 20px; position: relative; }
+    .image-upload-area p { color: #1565C0; font-weight: bold; margin: 0; line-height: 1.5; }
+    .image-upload-area img { max-width: 100%; border-radius: 4px; display: none; margin-top: 10px; }
     .form-group { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-    label { font-weight: bold; width: 40%; }
-    input { font-size: 16px; padding: 8px; width: 50%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
+    label { font-weight: bold; width: 40%; font-size: 14px; }
+    input[type="number"], select { font-size: 16px; padding: 8px; width: 50%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
     button { font-size: 16px; padding: 15px; width: 100%; background-color: #1976D2; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
     button:active { background-color: #1565C0; }
     #resultArea { margin-top: 20px; padding: 15px; background-color: #E3F2FD; border-radius: 8px; display: none; }
@@ -19,9 +26,18 @@
 </head>
 <body>
   <div class="container">
-    <h1>GBLチェッカー<br><small>(マリルリ・スーパー用)</small></h1>
+    <h1>GBLチェッカー</h1>
     
-    <p style="font-size: 14px; color: #666; text-align: center;">個体値 (0〜15) を入力してください</p>
+    <div class="image-upload-area" onclick="document.getElementById('fileInput').click()">
+      <p id="uploadText">📷 ここをタップして<br>スクショを選択</p>
+      <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="previewImage(event)">
+      <img id="previewImage">
+    </div>
+
+    <div class="form-group">
+      <label>ポケモン選択</label>
+      <select id="pokemonSelect" onchange="clearResult()"></select>
+    </div>
     
     <div class="form-group">
       <label>攻撃 (ATK)</label>
@@ -45,116 +61,155 @@
   </div>
 
   <script>
-    // --- 1. 基礎データ ---
-    // マリルリの種族値
-    const BASE_ATK = 112;
-    const BASE_DEF = 152;
-    const BASE_HP = 225;
-    
-    // PL1〜51までのCPM（CP Multiplier）の一部抜粋（マリルリのスーパーリーグ帯 PL30〜45付近を網羅）
-    // ※本来はPL1〜51の全100個のデータが必要ですが、今回は計算量とコード量を減らすため主要な帯域のみ持たせています。
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+
+    window.onload = function() {
+      const select = document.getElementById('pokemonSelect');
+      for (const pokemonName in POKEDEX) {
+        const option = document.createElement('option');
+        option.value = pokemonName;
+        option.textContent = pokemonName;
+        select.appendChild(option);
+      }
+    };
+
+    // ▼ 画像プレビューと文字認識処理 ▼
+    async function previewImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const img = document.getElementById('previewImage');
+      const text = document.getElementById('uploadText');
+      const reader = new FileReader();
+
+      reader.onload = async function(e) {
+        img.src = e.target.result;
+        img.style.display = 'block';
+        
+        text.innerHTML = "⏳ 画像の文字を解析中...<br><small style='font-size:12px; color:#666;'>(通信があるため数秒かかります)</small>";
+        text.style.display = 'block';
+
+        try {
+          const worker = await Tesseract.createWorker('jpn+eng');
+          const ret = await worker.recognize(img.src);
+          const recognizedText = ret.data.text;
+          await worker.terminate();
+
+          console.log("【OCR読み取り結果】\n", recognizedText);
+
+          let foundPokemon = "";
+          let foundCP = "";
+
+          const select = document.getElementById('pokemonSelect');
+          for (const pokemonName in POKEDEX) {
+            if (recognizedText.includes(pokemonName)) {
+              select.value = pokemonName;
+              foundPokemon = pokemonName;
+              break;
+            }
+          }
+
+          const cpMatch = recognizedText.match(/CP\s*(\d+)/i);
+          if (cpMatch && cpMatch[1]) {
+            foundCP = cpMatch[1];
+          }
+
+          if (foundPokemon) {
+            text.innerHTML = `✅ 解析完了！<br><small style="color:#2e7d32; font-size:14px;">「${foundPokemon}」を検出しました</small>`;
+            if (foundCP) text.innerHTML += `<br><small style="color:#2e7d32;">(参考CP: ${foundCP})</small>`;
+          } else {
+            text.innerHTML = "⚠️ 完了<br><small>ポケモン名が見つかりませんでした</small>";
+          }
+          
+          setTimeout(() => { text.style.display = 'none'; }, 4000);
+
+        } catch (err) {
+          console.error(err);
+          text.innerHTML = "❌ 解析エラーが発生しました";
+        }
+      };
+      
+      reader.readAsDataURL(file);
+    }
+
     const cpmTable = [
-      { level: 35.0, cpm: 0.76156384 }, { level: 35.5, cpm: 0.76465306 },
-      { level: 36.0, cpm: 0.76734914 }, { level: 36.5, cpm: 0.77032779 },
-      { level: 37.0, cpm: 0.77316186 }, { level: 37.5, cpm: 0.77604518 },
-      { level: 38.0, cpm: 0.77855325 }, { level: 38.5, cpm: 0.78135061 },
-      { level: 39.0, cpm: 0.78393529 }, { level: 39.5, cpm: 0.78665809 },
-      { level: 40.0, cpm: 0.79030001 }, { level: 40.5, cpm: 0.79462615 },
-      { level: 41.0, cpm: 0.79883501 }, { level: 41.5, cpm: 0.80302485 },
-      { level: 42.0, cpm: 0.80718870 }, { level: 42.5, cpm: 0.81132808 },
-      { level: 43.0, cpm: 0.81543886 }, { level: 43.5, cpm: 0.81952328 },
-      { level: 44.0, cpm: 0.82358055 }, { level: 44.5, cpm: 0.82761361 },
-      { level: 45.0, cpm: 0.83161646 }, { level: 45.5, cpm: 0.83559132 }
+      { level: 14.0, cpm: 0.49985844 }, { level: 15.0, cpm: 0.51739395 }, 
+      { level: 20.0, cpm: 0.59740000 }, { level: 25.0, cpm: 0.66793400 },
+      { level: 26.0, cpm: 0.68116492 }, { level: 27.0, cpm: 0.69414365 },
+      { level: 28.0, cpm: 0.70688421 }, { level: 29.0, cpm: 0.71939909 },
+      { level: 30.0, cpm: 0.7317 }, { level: 40.0, cpm: 0.7903 }, { level: 50.0, cpm: 0.8403 }
     ];
 
-    // --- 2. 計算ロジック ---
-    function calculateGBLStats(ivA, ivD, ivH, targetCP = 1500) {
+    let currentRankingCache = { pokemon: "", ranks: [] };
+
+    function calculateGBLStats(baseAtk, baseDef, baseHp, ivA, ivD, ivH, targetCP = 1500) {
       let bestStat = null;
-      
-      // CP1500以下になる最大のレベル(CPM)を探す
       for (let i = 0; i < cpmTable.length; i++) {
         const cpm = cpmTable[i].cpm;
         const level = cpmTable[i].level;
-        
-        const atk = BASE_ATK + ivA;
-        const def = BASE_DEF + ivD;
-        const hp = BASE_HP + ivH;
-        
-        // CP計算式
+        const atk = baseAtk + ivA;
+        const def = baseDef + ivD;
+        const hp = baseHp + ivH;
         const cp = Math.floor(Math.max(10, (atk * Math.sqrt(def) * Math.sqrt(hp) * Math.pow(cpm, 2)) / 10));
-        
         if (cp <= targetCP) {
-          // 実数値を計算（HPのみ切り捨て）
           const realAtk = atk * cpm;
           const realDef = def * cpm;
           const realHp = Math.floor(hp * cpm);
-          const statProduct = realAtk * realDef * realHp;
-          
-          bestStat = { level, cp, statProduct, ivA, ivD, ivH };
-        } else {
-          // CP1500を超えたら探索終了
-          break;
-        }
+          bestStat = { level, cp, statProduct: realAtk * realDef * realHp, ivA, ivD, ivH };
+        } else { break; }
       }
       return bestStat;
     }
 
-    // 全4096通りのランキングを生成
-    let rankingCache = null;
-    function getRanking() {
-      if (rankingCache) return rankingCache; // 計算済みなら使い回す
-      
+    function getRanking(pokemonName) {
+      if (currentRankingCache.pokemon === pokemonName) return currentRankingCache.ranks;
+      const baseStats = POKEDEX[pokemonName];
       const ranks = [];
       for (let a = 0; a <= 15; a++) {
         for (let d = 0; d <= 15; d++) {
           for (let h = 0; h <= 15; h++) {
-            const stat = calculateGBLStats(a, d, h, 1500);
+            const stat = calculateGBLStats(baseStats.atk, baseStats.def, baseStats.hp, a, d, h, 1500);
             if (stat) ranks.push(stat);
           }
         }
       }
-      // ステータス積(statProduct)が高い順に並び替え
       ranks.sort((a, b) => b.statProduct - a.statProduct);
-      rankingCache = ranks;
+      currentRankingCache = { pokemon: pokemonName, ranks: ranks };
       return ranks;
     }
 
-    // --- 3. 画面表示処理 ---
+    function clearResult() { document.getElementById('resultArea').style.display = 'none'; }
+
     function checkRank() {
+      const selectedPokemon = document.getElementById('pokemonSelect').value;
       const a = parseInt(document.getElementById('ivAtk').value);
       const d = parseInt(document.getElementById('ivDef').value);
       const h = parseInt(document.getElementById('ivHp').value);
-      
-      if (isNaN(a) || isNaN(d) || isNaN(h) || a < 0 || a > 15 || d < 0 || d > 15 || h < 0 || h > 15) {
-        alert("0〜15の数字を入力してください");
-        return;
-      }
-
-      // ランキングを取得
-      const ranks = getRanking();
-      
-      // 入力された個体値が何位かを探す
+      const ranks = getRanking(selectedPokemon);
       let myRank = -1;
       let myStat = null;
+      
       for (let i = 0; i < ranks.length; i++) {
         if (ranks[i].ivA === a && ranks[i].ivD === d && ranks[i].ivH === h) {
-          myRank = i + 1; // 配列は0番目から始まるので+1する
+          myRank = i + 1;
           myStat = ranks[i];
           break;
         }
       }
 
-      // 画面に表示
       const resultArea = document.getElementById('resultArea');
       const resultText = document.getElementById('resultText');
       resultArea.style.display = 'block';
       
       if (myStat) {
-        // 全体の何%の順位か（上位〇〇%）
         const percentile = ((myRank / 4096) * 100).toFixed(1);
-        
         resultText.innerHTML = `
-          <div class="rank-text">${myRank} 位 <span style="font-size:16px; color:#666;">/ 4096通り</span></div>
+          <div style="text-align:center; font-weight:bold; color:#555;">${selectedPokemon}</div>
+          <div class="rank-text">${myRank} 位 <span style="font-size:16px; color:#666;">/ 4096</span></div>
           <p style="text-align:center; margin-top:0;">(上位 ${percentile} %)</p>
           <hr style="border:0; border-top:1px dashed #ccc;">
           <ul style="line-height:1.8; color:#444;">
@@ -162,8 +217,6 @@
             <li>ステータス積: <b>${Math.round(myStat.statProduct).toLocaleString()}</b></li>
           </ul>
         `;
-      } else {
-        resultText.innerHTML = `<p style="color:red;">計算エラーが発生しました。</p>`;
       }
     }
   </script>

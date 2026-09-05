@@ -1,7 +1,8 @@
-const CACHE_NAME = 'iv-checker-v1';
+const CACHE_NAME = 'iv-checker-v3';
 const urlsToCache = [
   './',
   './index.html',
+  './pokedex.js',
   './manifest.json',
   './icon.png'
 ];
