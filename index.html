@@ -6,7 +6,6 @@
   <link rel="manifest" href="manifest.json">
   <title>GBL順位チェッカー</title>
   <script src="pokedex.js"></script>
-  <!-- ▼ Tesseract.js（文字認識ライブラリ）の読み込み ▼ -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
@@ -14,7 +13,7 @@
     h1 { text-align: center; color: #1976D2; font-size: 24px; margin-top: 0; }
     .image-upload-area { border: 2px dashed #1976D2; border-radius: 8px; padding: 20px; text-align: center; background-color: #E3F2FD; cursor: pointer; margin-bottom: 20px; position: relative; }
     .image-upload-area p { color: #1565C0; font-weight: bold; margin: 0; line-height: 1.5; }
-    .image-upload-area img { max-width: 100%; border-radius: 4px; display: none; margin-top: 10px; }
+    .image-upload-area img { max-width: 100%; border-radius: 4px; display: none; margin-top: 10px; border: 1px solid #ccc; }
     .form-group { margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
     label { font-weight: bold; width: 40%; font-size: 14px; }
     input[type="number"], select { font-size: 16px; padding: 8px; width: 50%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 8px; text-align: center; }
@@ -62,9 +61,7 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('service-worker.js');
-      });
+      window.addEventListener('load', function() { navigator.serviceWorker.register('service-worker.js'); });
     }
 
     window.onload = function() {
@@ -77,7 +74,7 @@
       }
     };
 
-    // ▼ 画像プレビューと文字認識処理 ▼
+    // ▼ 【重要】画像の下処理（Canvasによる切り抜きと白黒化）を追加 ▼
     async function previewImage(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -86,53 +83,91 @@
       const text = document.getElementById('uploadText');
       const reader = new FileReader();
 
-      reader.onload = async function(e) {
-        img.src = e.target.result;
-        img.style.display = 'block';
-        
-        text.innerHTML = "⏳ 画像の文字を解析中...<br><small style='font-size:12px; color:#666;'>(通信があるため数秒かかります)</small>";
-        text.style.display = 'block';
-
-        try {
-          const worker = await Tesseract.createWorker('jpn+eng');
-          const ret = await worker.recognize(img.src);
-          const recognizedText = ret.data.text;
-          await worker.terminate();
-
-          console.log("【OCR読み取り結果】\n", recognizedText);
-
-          let foundPokemon = "";
-          let foundCP = "";
-
-          const select = document.getElementById('pokemonSelect');
-          for (const pokemonName in POKEDEX) {
-            if (recognizedText.includes(pokemonName)) {
-              select.value = pokemonName;
-              foundPokemon = pokemonName;
-              break;
-            }
-          }
-
-          const cpMatch = recognizedText.match(/CP\s*(\d+)/i);
-          if (cpMatch && cpMatch[1]) {
-            foundCP = cpMatch[1];
-          }
-
-          if (foundPokemon) {
-            text.innerHTML = `✅ 解析完了！<br><small style="color:#2e7d32; font-size:14px;">「${foundPokemon}」を検出しました</small>`;
-            if (foundCP) text.innerHTML += `<br><small style="color:#2e7d32;">(参考CP: ${foundCP})</small>`;
-          } else {
-            text.innerHTML = "⚠️ 完了<br><small>ポケモン名が見つかりませんでした</small>";
-          }
+      reader.onload = function(e) {
+        const tempImg = new Image();
+        tempImg.onload = async function() {
           
-          setTimeout(() => { text.style.display = 'none'; }, 4000);
+          // 1. Canvasを準備して、画像の上部だけを切り抜く
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // スマホのスクショの上から約8%〜33%の範囲（CPと名前がある場所）を狙う
+          const startY = tempImg.height * 0.08; 
+          const cropHeight = tempImg.height * 0.25;
+          const cropWidth = tempImg.width;
+          
+          canvas.width = cropWidth;
+          canvas.height = cropHeight;
+          ctx.drawImage(tempImg, 0, startY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+          
+          // 2. ピクセルデータをいじって「白黒反転（2値化）」にする
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imageData.data;
+          
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i+1];
+            const b = data[i+2];
+            
+            // 明るさを計算
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+            
+            // ポケモンGOの文字は白いので、明るい部分(200以上)を「黒(0)」に、それ以外を「白(255)」にする
+            const color = brightness > 200 ? 0 : 255; 
+            
+            data[i] = color;     // Red
+            data[i+1] = color;   // Green
+            data[i+2] = color;   // Blue
+          }
+          ctx.putImageData(imageData, 0, 0);
+          
+          // 下処理が完了した「白黒画像」を画面に表示する
+          img.src = canvas.toDataURL('image/jpeg');
+          img.style.display = 'block';
+          
+          text.innerHTML = "⏳ 白黒化して文字を解析中...<br><small style='font-size:12px; color:#666;'>(通信があるため数秒かかります)</small>";
+          text.style.display = 'block';
 
-        } catch (err) {
-          console.error(err);
-          text.innerHTML = "❌ 解析エラーが発生しました";
-        }
+          // 3. 処理済みの画像を使ってTesseract.jsで文字認識
+          try {
+            const worker = await Tesseract.createWorker('jpn+eng');
+            const ret = await worker.recognize(img.src);
+            const recognizedText = ret.data.text;
+            await worker.terminate();
+
+            console.log("【OCR読み取り結果】\n", recognizedText);
+
+            let foundPokemon = "";
+            let foundCP = "";
+
+            const select = document.getElementById('pokemonSelect');
+            for (const pokemonName in POKEDEX) {
+              if (recognizedText.includes(pokemonName)) {
+                select.value = pokemonName;
+                foundPokemon = pokemonName;
+                break;
+              }
+            }
+
+            const cpMatch = recognizedText.match(/CP\s*(\d+)/i);
+            if (cpMatch && cpMatch[1]) { foundCP = cpMatch[1]; }
+
+            if (foundPokemon) {
+              text.innerHTML = `✅ 解析完了！<br><small style="color:#2e7d32; font-size:14px;">「${foundPokemon}」を検出</small>`;
+              if (foundCP) text.innerHTML += `<br><small style="color:#2e7d32;">(参考CP: ${foundCP})</small>`;
+            } else {
+              text.innerHTML = "⚠️ 完了<br><small>ポケモン名が見つかりませんでした</small>";
+            }
+            
+            setTimeout(() => { text.style.display = 'none'; }, 4000);
+
+          } catch (err) {
+            console.error(err);
+            text.innerHTML = "❌ 解析エラーが発生しました";
+          }
+        };
+        tempImg.src = e.target.result;
       };
-      
       reader.readAsDataURL(file);
     }
 
@@ -192,19 +227,15 @@
       const ranks = getRanking(selectedPokemon);
       let myRank = -1;
       let myStat = null;
-      
       for (let i = 0; i < ranks.length; i++) {
         if (ranks[i].ivA === a && ranks[i].ivD === d && ranks[i].ivH === h) {
-          myRank = i + 1;
-          myStat = ranks[i];
-          break;
+          myRank = i + 1; myStat = ranks[i]; break;
         }
       }
 
       const resultArea = document.getElementById('resultArea');
       const resultText = document.getElementById('resultText');
       resultArea.style.display = 'block';
-      
       if (myStat) {
         const percentile = ((myRank / 4096) * 100).toFixed(1);
         resultText.innerHTML = `
