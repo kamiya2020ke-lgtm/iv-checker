@@ -6,9 +6,11 @@
   <link rel="manifest" href="manifest.json">
   <title>GBL順位チェッカー</title>
   <script src="pokedex.js"></script>
+  <script src="movesets.js"></script>
+  <script src="raid_attackers.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; margin: 0; }
-    .container { max-width: 400px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px 10px; background-color: #f0f2f5; color: #333; margin: 0; }
+    .container { max-width: 580px; width: 100%; box-sizing: border-box; margin: 0 auto; background: white; padding: 18px 16px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     h1 { text-align: center; color: #1976D2; font-size: 24px; margin-top: 0; margin-bottom: 20px; }
     
     .form-group { margin-bottom: 25px; }
@@ -30,20 +32,24 @@
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #ddd; border-radius: 4px; }
     input[type=range]::-webkit-slider-thumb { height: 24px; width: 24px; border-radius: 50%; background: #1976D2; cursor: pointer; -webkit-appearance: none; margin-top: -8px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 2px solid white;}
     
-    #resultArea { margin-top: 25px; padding: 18px; background-color: #f5f7fa; border-radius: 12px; display: none; border: 1px solid #e0e0e0; }
-    .rank-text { font-size: 26px; font-weight: bold; color: #D32F2F; text-align: center; margin: 6px 0; }
+    #resultArea { margin-top: 25px; padding: 16px 12px; background-color: #f5f7fa; border-radius: 12px; display: none; border: 1px solid #e0e0e0; }
     
-    /* 2つのリーグ表示用のスタイル */
+    /* 3つのリーグ横並び（3列グリッド）表示スタイル */
     .leagues-container {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
     .league-card {
-      padding: 14px;
+      padding: 10px 6px;
       border-radius: 10px;
       border: 1px solid transparent;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+      box-sizing: border-box;
     }
     .league-great {
       background-color: #E3F2FD;
@@ -53,34 +59,460 @@
       background-color: #FFF8E1;
       border-color: #FFE082;
     }
+    .league-master {
+      background-color: #F3E5F5;
+      border-color: #CE93D8;
+    }
     .league-header {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 3px;
+      margin-bottom: 6px;
     }
     .league-title {
       font-weight: bold;
-      font-size: 16px;
+      font-size: 14px;
+      text-align: center;
+      white-space: nowrap;
     }
     .league-great .league-title { color: #1565C0; }
-    .league-ultra .league-title { color: #F57F17; }
+    .league-ultra .league-title { color: #E65100; }
+    .league-master .league-title { color: #6A1B9A; }
     .league-badge {
+      font-size: 10px;
+      font-weight: bold;
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: white;
+      white-space: nowrap;
+    }
+    .badge-great { background-color: #1976D2; }
+    .badge-ultra { background-color: #F57C00; }
+    .badge-master { background-color: #7B1FA2; }
+    
+    .league-result-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-grow: 1;
+      height: 100%;
+    }
+    .rank-text {
+      font-size: 20px;
+      font-weight: bold;
+      color: #D32F2F;
+      text-align: center;
+      margin: 4px 0 2px 0;
+      white-space: nowrap;
+    }
+    .rank-subtext {
+      text-align: center;
+      margin: 0 0 6px 0;
+      color: #555;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .rank-pct {
+      font-weight: 500;
+      color: #1565C0;
+    }
+    .stat-box {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #333;
+      background: rgba(255,255,255,0.85);
+      padding: 6px 4px;
+      border-radius: 6px;
+      text-align: center;
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
+    @media (max-width: 380px) {
+      .container { padding: 12px 8px; }
+      .leagues-container { gap: 4px; }
+      .league-card { padding: 8px 3px; }
+      .league-title { font-size: 12px; }
+      .rank-text { font-size: 16px; }
+      .rank-subtext { font-size: 10px; }
+      .stat-box { font-size: 10px; padding: 4px 2px; }
+      .btn-league-top30 { font-size: 10px; padding: 3px 2px; }
+    }
+
+    /* おすすめ技構成カードのスタイル */
+    .moveset-card {
+      margin-top: 14px;
+      margin-bottom: 14px;
+      background: white;
+      border: 1px solid #E0E0E0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .moveset-header {
+      background: #ECEFF1;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #37474F;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid #E0E0E0;
+    }
+    .moveset-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .moveset-table tr:first-child td,
+    .moveset-table tr:first-child th {
+      border-bottom: 1px solid #EEEEEE;
+    }
+    .moveset-th {
+      width: 28%;
+      background-color: #F8F9FA;
+      color: #333333;
+      font-weight: bold;
+      font-size: 13px;
+      text-align: center;
+      padding: 10px 8px;
+      vertical-align: middle;
+      border-right: 1px solid #EEEEEE;
+    }
+    .moveset-td {
+      padding: 8px 12px;
+      vertical-align: middle;
+      background-color: #FFFFFF;
+    }
+    .move-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 3px 0;
+    }
+    .type-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+    .move-name {
+      font-weight: bold;
+      color: #0077D4;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+    .legacy-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #616161;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-left: 2px;
+      line-height: 1.2;
+    }
+    .moveset-header.non-legacy-header {
+      background: #F1F3F5;
+      color: #37474F;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 12px;
+      border-top: 1px solid #E0E0E0;
+      border-bottom: 1px solid #E0E0E0;
+    }
+    .non-legacy-tag {
+      background: #E8F5E9;
+      color: #2E7D32;
       font-size: 11px;
       font-weight: bold;
       padding: 2px 7px;
       border-radius: 4px;
-      color: white;
+      border: 1px solid #C8E6C9;
+      white-space: nowrap;
     }
-    .badge-great { background-color: #1976D2; }
-    .badge-ultra { background-color: #F57C00; }
-    .stat-box {
-      font-size: 14px;
-      line-height: 1.8;
-      color: #333;
-      background: rgba(255,255,255,0.75);
+    .moveset-no-legacy-notice {
       padding: 8px 12px;
+      background: #F1F8E9;
+      color: #2E7D32;
+      font-size: 12px;
+      font-weight: 500;
+      border-top: 1px solid #E0E0E0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* 上位30位ランキングセクション */
+    .top30-container {
+      margin-top: 20px;
+      background: #FFFFFF;
+      border: 1px solid #E0E0E0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    /* アコーディオン・折りたたみ共通スタイル */
+    .accordion-header {
+      background: #ECEFF1;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease;
+      border-bottom: 1px solid #CFD8DC;
+    }
+    .accordion-header:hover {
+      background: #E0E4E7;
+    }
+    .accordion-header.sl-accordion-header {
+      background: #E3F2FD;
+      border-bottom: 1px solid #BBDEFB;
+    }
+    .accordion-header.sl-accordion-header:hover {
+      background: #D7E9F7;
+    }
+    .accordion-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #263238;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .accordion-subtext {
+      font-size: 11px;
+      color: #607D8B;
+      font-weight: normal;
+    }
+    .collapse-toggle-btn {
+      background: #FFFFFF;
+      color: #37474F;
+      border: 1px solid #B0BEC5;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 3px 8px;
       border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .collapse-toggle-btn.open {
+      background: #37474F;
+      color: #FFFFFF;
+      border-color: #263238;
+    }
+    .accordion-header:hover .collapse-toggle-btn {
+      border-color: #78909C;
+    }
+    .top30-tabs-bar {
+      padding: 8px 12px;
+      background: #F8F9FA;
+      border-bottom: 1px solid #ECEFF1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .top30-tabs {
+      display: flex;
+      gap: 6px;
+    }
+    .top30-tab-btn {
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid #B0BEC5;
+      border-radius: 6px;
+      background: #FFFFFF;
+      color: #546E7A;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .top30-tab-btn:hover {
+      background: #ECEFF1;
+    }
+    .top30-tab-btn.active.tab-super {
+      background: #00897B;
+      color: white;
+      border-color: #00796B;
+    }
+    .top30-tab-btn.active.tab-ultra {
+      background: #E65100;
+      color: white;
+      border-color: #BF360C;
+    }
+    .top30-tab-btn.active.tab-master {
+      background: #6A1B9A;
+      color: white;
+      border-color: #4A148C;
+    }
+    .top30-current-banner {
+      background: #F8F9FA;
+      padding: 8px 12px;
+      border-bottom: 1px solid #EEEEEE;
+      font-size: 12px;
+      color: #37474F;
+    }
+    .top30-banner-inner {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+    .top30-banner-inner.is-top30 {
+      color: #2E7D32;
+      font-weight: bold;
+    }
+    .badge-in-top30 {
+      background: #E8F5E9;
+      color: #2E7D32;
+      border: 1px solid #A5D6A7;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    .top30-table-wrapper {
+      max-height: 440px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .top30-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: center;
+    }
+    .top30-table th {
+      position: sticky;
+      top: 0;
+      background: #F4F6F8;
+      color: #455A64;
+      font-weight: bold;
+      font-size: 12px;
+      padding: 8px 6px;
+      border-bottom: 2px solid #CFD8DC;
+      z-index: 1;
+    }
+    .top30-table td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #EEEEEE;
+      vertical-align: middle;
+    }
+    .top30-row {
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .top30-row:hover {
+      background-color: #F0F7FF;
+    }
+    .top30-row.current-active-row {
+      background-color: #FFFDE7 !important;
+      outline: 2px solid #FFA000;
+      outline-offset: -2px;
+      font-weight: bold;
+    }
+    .rank-medal {
+      display: inline-block;
+      font-weight: bold;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .rank-medal.gold {
+      background: #FFF8E1;
+      color: #B78103;
+      border: 1px solid #FFE082;
+    }
+    .rank-medal.silver {
+      background: #ECEFF1;
+      color: #546E7A;
+      border: 1px solid #CFD8DC;
+    }
+    .rank-medal.bronze {
+      background: #FBE9E7;
+      color: #BF360C;
+      border: 1px solid #FFCCBC;
+    }
+    .top30-iv-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .iv-val-chip {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: bold;
+      color: #1E293B;
+      letter-spacing: 0.5px;
+    }
+    .current-tag {
+      background: #FF9800;
+      color: white;
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+    .top30-lv {
+      color: #78909C;
+      font-size: 11px;
+      margin-left: 2px;
+    }
+    .stat-num {
+      font-weight: bold;
+      color: #334155;
+    }
+    .stat-pct {
+      font-size: 11px;
+      color: #0288D1;
+    }
+    .top30-footer-hint {
+      padding: 8px 12px;
+      background: #FAFAFA;
+      color: #757575;
+      font-size: 11px;
+      text-align: center;
+      border-top: 1px solid #EEEEEE;
+    }
+    .btn-league-top30 {
+      margin-top: 8px;
+      width: 100%;
+      background: #FFFFFF;
+      border: 1px solid #CFD8DC;
+      color: #455A64;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .btn-league-top30:hover {
+      background: #F5F7FA;
+      border-color: #90A4AE;
+      color: #263238;
     }
 
     /* 画像アップロード関連のスタイル */
@@ -173,6 +605,745 @@
       border: 1px solid #ffcdd2;
       color: #c62828;
     }
+
+    /* 複数画像一括解析セクション */
+    .batch-results-container {
+      margin-top: 14px;
+      display: none;
+    }
+    .batch-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .batch-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1976D2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .batch-count-badge {
+      background: #1976D2;
+      color: white;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+    .batch-hint {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .batch-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 440px;
+      overflow-y: auto;
+      padding-right: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .batch-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      position: relative;
+    }
+    .batch-card:hover {
+      border-color: #90caf9;
+      background: #f8fbff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(25, 118, 210, 0.1);
+    }
+    .batch-card.active {
+      border: 2px solid #1976D2;
+      background: #e3f2fd;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.2);
+    }
+    .batch-card-num {
+      font-size: 11px;
+      font-weight: bold;
+      color: #888;
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .batch-card.active .batch-card-num {
+      color: #1976D2;
+    }
+    .batch-thumb {
+      width: 44px;
+      height: 58px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      flex-shrink: 0;
+      background: #eee;
+    }
+    .batch-thumb-placeholder {
+      width: 44px;
+      height: 58px;
+      border-radius: 4px;
+      border: 1px dashed #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: #f5f5f5;
+      flex-shrink: 0;
+    }
+    .batch-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .batch-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .batch-pokemon-name {
+      font-weight: bold;
+      font-size: 14px;
+      color: #222;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .batch-iv-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .batch-iv-tag {
+      font-weight: bold;
+      background: #eef2f5;
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: #333;
+      font-size: 11px;
+    }
+    .batch-card.active .batch-iv-tag {
+      background: #bbdefb;
+    }
+    .batch-iv-pct {
+      font-size: 11px;
+      color: #666;
+      font-weight: 500;
+    }
+    .batch-leagues-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .batch-league-pill {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+    }
+    .batch-league-great {
+      background: #E3F2FD;
+      color: #1565C0;
+      border: 1px solid #BBDEFB;
+    }
+    .batch-league-ultra {
+      background: #FFF8E1;
+      color: #E65100;
+      border: 1px solid #FFE082;
+    }
+    .batch-league-master {
+      background: #F3E5F5;
+      color: #7B1FA2;
+      border: 1px solid #E1BEE7;
+    }
+    .batch-rank-highlight {
+      font-weight: 900 !important;
+      color: #D32F2F !important;
+      background: #FFEBEE !important;
+      border-color: #FFCDD2 !important;
+    }
+    .batch-action-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .btn-batch-select {
+      background: #1976D2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .batch-card.active .btn-batch-select {
+      background: #2E7D32;
+    }
+    .btn-batch-select:hover {
+      background: #1565C0;
+    }
+    .batch-error-card {
+      border-color: #FFCDD2;
+      background: #FFF5F5;
+    }
+
+    /* 検索可能セレクトボックス (Combobox) スタイル */
+    .search-select-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .search-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 2px solid #90caf9;
+      border-radius: 8px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input-wrapper:focus-within {
+      border-color: #1976D2;
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+    }
+    .search-icon {
+      padding-left: 10px;
+      font-size: 14px;
+      color: #777;
+      pointer-events: none;
+      user-select: none;
+    }
+    .pokemon-search-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      padding: 10px 8px;
+      font-size: 16px;
+      background: transparent;
+      box-sizing: border-box;
+      font-family: inherit;
+      color: #222;
+    }
+    .clear-search-btn {
+      background: none;
+      border: none;
+      color: #999;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 6px 8px;
+      display: none;
+      line-height: 1;
+    }
+    .clear-search-btn:hover {
+      color: #333;
+    }
+    .dropdown-arrow-btn {
+      background: none;
+      border: none;
+      color: #1976D2;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 10px 12px;
+      border-left: 1px solid #e0e0e0;
+      transition: transform 0.2s;
+      user-select: none;
+    }
+    .dropdown-arrow-btn.open {
+      transform: rotate(180deg);
+    }
+    .pokemon-dropdown-list {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      max-height: 260px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #90caf9;
+      border-radius: 8px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      z-index: 1000;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pokemon-dropdown-list.show {
+      display: block;
+    }
+    .dropdown-group-header {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #1565C0;
+      background: #e3f2fd;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      border-bottom: 1px solid #bbdefb;
+    }
+    .dropdown-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background-color 0.1s;
+    }
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+    .dropdown-item:hover, .dropdown-item.highlighted {
+      background-color: #f1f8ff;
+    }
+    .dropdown-item.selected {
+      background-color: #e3f2fd;
+      font-weight: bold;
+      color: #1565C0;
+    }
+    .dropdown-item-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: normal;
+    }
+    .badge-super-mini {
+      background-color: #e3f2fd;
+      color: #1565C0;
+      border: 1px solid #90caf9;
+    }
+    .badge-ultra-mini {
+      background-color: #fff3e0;
+      color: #e65100;
+      border: 1px solid #ffcc80;
+    }
+    .no-results {
+      padding: 16px;
+      text-align: center;
+      color: #888;
+      font-size: 13px;
+    }
+
+    /* リーグ別一覧表スタイル */
+    .league-tab-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .league-tab-btn {
+      flex: 1;
+      padding: 9px 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #f0f2f5;
+      color: #666;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .league-tab-btn.tab-super.active {
+      background: #1976D2;
+      color: white;
+      border-color: #1565C0;
+      box-shadow: 0 2px 4px rgba(25, 118, 210, 0.25);
+    }
+    .league-tab-btn.tab-ultra.active {
+      background: #F57C00;
+      color: white;
+      border-color: #E65100;
+      box-shadow: 0 2px 4px rgba(245, 124, 0, 0.25);
+    }
+
+    .sl-section {
+      margin-top: 24px;
+      background: #f8fbff;
+      border: 1px solid #bbdefb;
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .sl-content {
+      padding: 14px;
+    }
+    .sl-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      border-bottom: 2px solid #90caf9;
+      padding-bottom: 6px;
+    }
+    .sl-title {
+      font-weight: bold;
+      font-size: 15px;
+      color: #1565c0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .sl-badge {
+      background: #1976d2;
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .sl-hint {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .sl-table-wrapper {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      background: white;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sl-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+    .sl-table th {
+      background: #e3f2fd;
+      color: #1565c0;
+      padding: 8px 6px;
+      font-weight: bold;
+      border-bottom: 1px solid #bbdefb;
+      white-space: nowrap;
+    }
+    .sl-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+    .sl-table tr:last-child td {
+      border-bottom: none;
+    }
+    .sl-table-row {
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .sl-table-row:hover {
+      background-color: #f1f8ff;
+    }
+    .sl-table-row.active {
+      background-color: #e3f2fd;
+      font-weight: bold;
+    }
+    .sl-name {
+      font-weight: bold;
+      color: #222;
+      white-space: nowrap;
+    }
+    .sl-iv {
+      text-align: center;
+    }
+    .iv-badge {
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-weight: bold;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 11px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+    .sl-cp {
+      color: #555;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .sl-action {
+      text-align: center;
+    }
+    .btn-select {
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.15s;
+    }
+    .btn-select:hover {
+      background: #1565c0;
+    }
+
+    /* タイプ別レイドアタッカー上位30位セクション */
+    .raid-section {
+      margin-top: 24px;
+      background: #ffffff;
+      border: 1px solid #ffd54f;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .accordion-header.raid-accordion-header {
+      background: linear-gradient(135deg, #FFF9C4, #FFF59D);
+      border-bottom: 1px solid #FFE082;
+    }
+    .accordion-header.raid-accordion-header:hover {
+      background: linear-gradient(135deg, #FFF59D, #FFEE58);
+    }
+    .raid-content {
+      padding: 12px;
+      background: #fafafa;
+    }
+    .raid-type-selector-header {
+      margin-bottom: 6px;
+    }
+    .raid-selector-label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #5d4037;
+    }
+    .raid-type-selector {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 600px) {
+      .raid-type-selector {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+      }
+    }
+    .raid-type-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 6px 4px;
+      border-radius: 20px;
+      border: 1px solid #e0e0e0;
+      background: #ffffff;
+      font-size: 12px;
+      font-weight: bold;
+      color: #444;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      outline: none;
+    }
+    .raid-type-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+    }
+    .raid-type-pill.active {
+      border-color: transparent !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .raid-pill-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .raid-pill-icon svg {
+      width: 11px;
+      height: 11px;
+    }
+    .raid-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      border-bottom: 2px solid #ffe082;
+      padding-bottom: 6px;
+    }
+    .raid-header-title {
+      font-weight: bold;
+      font-size: 14px;
+      color: #e65100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .raid-type-badge {
+      color: white;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .raid-hint {
+      font-size: 11px;
+      color: #757575;
+      margin-bottom: 10px;
+    }
+    .raid-table-wrapper {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      background: white;
+      -webkit-overflow-scrolling: touch;
+    }
+    .raid-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+    .raid-table th {
+      background: #FFF8E1;
+      color: #6D4C41;
+      padding: 8px 6px;
+      font-weight: bold;
+      border-bottom: 1px solid #FFE082;
+      white-space: nowrap;
+    }
+    .raid-table td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+    .raid-table tr:last-child td {
+      border-bottom: none;
+    }
+    .raid-table tr:nth-child(even) td {
+      background-color: #fafafa;
+    }
+    .raid-row.clickable {
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .raid-row.clickable:hover td {
+      background-color: #FFFDE7 !important;
+    }
+    .raid-rank-col {
+      text-align: center;
+      font-weight: bold;
+      width: 38px;
+      white-space: nowrap;
+    }
+    .raid-rank-1 {
+      color: #d84315;
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .raid-rank-2 {
+      color: #e65100;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .raid-rank-3 {
+      color: #f57f17;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .raid-pokemon-col {
+      white-space: nowrap;
+    }
+    .raid-pokemon-name-wrap {
+      display: inline-flex;
+      align-items: center;
+      font-weight: bold;
+      color: #212121;
+    }
+    .badge-form {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      color: white;
+      margin-right: 4px;
+      vertical-align: middle;
+      font-weight: bold;
+      line-height: 1.2;
+    }
+    .badge-mega { background-color: #E91E63; }
+    .badge-primal { background-color: #C2185B; }
+    .badge-shadow { background-color: #7B1FA2; }
+    .btn-shadow-toggle {
+      background: #7B1FA2;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 3px 8px;
+      cursor: pointer;
+      margin-left: 8px;
+      transition: all 0.15s ease;
+      vertical-align: middle;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 1px 3px rgba(123, 31, 162, 0.3);
+    }
+    .btn-shadow-toggle:hover {
+      background: #6A1B9A;
+      transform: translateY(-1px);
+    }
+    .raid-move-col {
+      white-space: nowrap;
+    }
+    .raid-move-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .raid-type-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+    .raid-type-icon svg {
+      width: 10px;
+      height: 10px;
+    }
+    .raid-move-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+    }
   </style>
 </head>
 <body>
@@ -184,8 +1355,8 @@
       <div class="drop-zone" id="dropZone" onclick="document.getElementById('imageInput').click()">
         <span class="drop-zone-icon">📷</span>
         <div class="drop-zone-title">スクリーンショットを読み込む</div>
-        <div class="drop-zone-hint">タップして選択 / ドロップ / 貼り付け (Ctrl+V)</div>
-        <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+        <div class="drop-zone-hint">タップして選択 (複数枚対応) / ドロップ / 貼り付け (Ctrl+V)</div>
+        <input type="file" id="imageInput" accept="image/*" multiple style="display:none;" onchange="handleFileSelect(event)">
       </div>
 
       <div class="preview-container" id="previewContainer">
@@ -197,10 +1368,34 @@
       </div>
 
       <div class="status-badge" id="statusBadge"></div>
+
+      <!-- 複数画像一括解析結果セクション -->
+      <div class="batch-results-container" id="batchResultsContainer" style="display: none;">
+        <div class="batch-header">
+          <div class="batch-title">
+            <span>📋 一括解析結果</span>
+            <span class="batch-count-badge" id="batchCountBadge">0枚</span>
+          </div>
+          <button type="button" class="btn-clear" onclick="clearBatchResults()">✕ 一括クリア</button>
+        </div>
+        <div class="batch-hint">※行または「反映」をタップすると、そのポケモンの詳細や技・個体値ランキング表を確認できます</div>
+        <div class="batch-list" id="batchResultsList">
+          <!-- JavaScriptで動的生成 -->
+        </div>
+      </div>
     </div>
     
-    <label style="font-weight:bold; color:#444;">ポケモン選択</label>
-    <select id="pokemonSelect" onchange="checkRank()"></select>
+    <label style="font-weight:bold; color:#444; margin-bottom:6px; display:block;">ポケモン選択 / 検索</label>
+    <div class="search-select-container" id="searchSelectContainer">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="pokemonSearchInput" class="pokemon-search-input" placeholder="ポケモン名を入力または検索..." autocomplete="off">
+        <button type="button" id="clearSearchBtn" class="clear-search-btn" onclick="clearPokemonSearch(event)" title="入力をクリア">✕</button>
+        <button type="button" id="toggleDropdownBtn" class="dropdown-arrow-btn" onclick="togglePokemonDropdown(event)" title="候補一覧を開く">▼</button>
+      </div>
+      <div class="pokemon-dropdown-list" id="pokemonDropdownList"></div>
+      <select id="pokemonSelect" onchange="checkRank()" style="display:none;"></select>
+    </div>
     
     <!-- 攻撃ゲージ -->
     <div class="form-group">
@@ -238,12 +1433,13 @@
     <div id="resultArea">
       <div id="resultPokemonName" style="text-align:center; font-weight:bold; color:#333; font-size:18px; margin-bottom:12px;"></div>
       
+      <!-- 各リーグ順位カード（スーパー・ハイパー・マスター） -->
       <div class="leagues-container">
         <!-- スーパーリーグ (CP 1500) -->
         <div class="league-card league-great">
           <div class="league-header">
             <span class="league-badge badge-great">CP 1500</span>
-            <span class="league-title">スーパーリーグ</span>
+            <span class="league-title">スーパー</span>
           </div>
           <div id="resultGreat"></div>
         </div>
@@ -252,9 +1448,184 @@
         <div class="league-card league-ultra">
           <div class="league-header">
             <span class="league-badge badge-ultra">CP 2500</span>
-            <span class="league-title">ハイパーリーグ</span>
+            <span class="league-title">ハイパー</span>
           </div>
           <div id="resultUltra"></div>
+        </div>
+
+        <!-- マスターリーグ (CP 無制限) -->
+        <div class="league-card league-master">
+          <div class="league-header">
+            <span class="league-badge badge-master">CP 無制限</span>
+            <span class="league-title">マスター</span>
+          </div>
+          <div id="resultMaster"></div>
+        </div>
+      </div>
+
+      <!-- おすすめ技構成カード -->
+      <div class="moveset-card" id="resultMovesetCard" style="display:none;">
+        <div class="moveset-header">⚔️ おすすめ技構成 (PvP)</div>
+        <table class="moveset-table">
+          <tr>
+            <th class="moveset-th">通常技</th>
+            <td class="moveset-td" id="movesetFast"></td>
+          </tr>
+          <tr>
+            <th class="moveset-th">ゲージ技</th>
+            <td class="moveset-td" id="movesetCharged"></td>
+          </tr>
+        </table>
+
+        <!-- レガシー技なし構成（レガシー技を含むポケモンの場合に追加表示） -->
+        <div id="movesetNonLegacySection" style="display:none;">
+          <div class="moveset-header non-legacy-header">
+            <span>🛡️ レガシー技（特別技）なしの構成</span>
+            <span class="non-legacy-tag">わざマシンで習得可能</span>
+          </div>
+          <table class="moveset-table">
+            <tr>
+              <th class="moveset-th" style="background-color: #FAFAFA; color: #555;">通常技</th>
+              <td class="moveset-td" id="movesetFastNonLegacy"></td>
+            </tr>
+            <tr>
+              <th class="moveset-th" style="background-color: #FAFAFA; color: #555;">ゲージ技</th>
+              <td class="moveset-td" id="movesetChargedNonLegacy"></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- レガシー技がないポケモンの案内バナー -->
+        <div id="movesetNoLegacyNotice" class="moveset-no-legacy-notice" style="display:none;">
+          <span>✨ このおすすめ構成はすべて通常のわざマシンで習得可能です（レガシー技なし）</span>
+        </div>
+      </div>
+
+      <!-- 個体値ランキング 上位30位一覧 -->
+      <div class="top30-container" id="top30Container" style="display:none;">
+        <div class="accordion-header" onclick="toggleTop30()">
+          <div class="accordion-title">
+            <span>🏆 個体値ランキング 上位30位一覧</span>
+          </div>
+          <span class="collapse-toggle-btn" id="top30ToggleIcon">▼ 開く</span>
+        </div>
+
+        <div id="top30Content" style="display: none;">
+          <div class="top30-tabs-bar">
+            <span style="font-size: 12px; font-weight: bold; color: #546E7A;">リーグ選択:</span>
+            <div class="top30-tabs">
+              <button type="button" class="top30-tab-btn active tab-super" id="top30TabSuper" onclick="switchTop30League('super')">スーパー (1500)</button>
+              <button type="button" class="top30-tab-btn" id="top30TabUltra" onclick="switchTop30League('ultra')">ハイパー (2500)</button>
+              <button type="button" class="top30-tab-btn" id="top30TabMaster" onclick="switchTop30League('master')">マスター (無制限)</button>
+            </div>
+          </div>
+
+          <div class="top30-current-banner" id="top30CurrentBanner"></div>
+
+          <div class="top30-table-wrapper">
+            <table class="top30-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">順位</th>
+                  <th>個体値 (攻/防/HP)</th>
+                  <th>最大CP (Lv)</th>
+                  <th>ステータス積 (比率)</th>
+                </tr>
+              </thead>
+              <tbody id="top30TableBody">
+              </tbody>
+            </table>
+          </div>
+          <div class="top30-footer-hint">💡 行をタップすると、その個体値（こうげき／ぼうぎょ／HP）をゲージに反映できます</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- リーグ別使えるポケモン一覧表 -->
+    <div class="sl-section" id="leagueTableSection">
+      <div class="accordion-header sl-accordion-header" onclick="toggleLeagueTable()">
+        <div class="accordion-title">
+          <span>📋 リーグ別使えるポケモン一覧</span>
+          <span class="accordion-subtext">(スーパー／ハイパー)</span>
+        </div>
+        <span class="collapse-toggle-btn" id="leagueTableToggleIcon">▼ 開く</span>
+      </div>
+
+      <div id="leagueTableContent" class="sl-content" style="display: none;">
+        <div class="league-tab-buttons">
+          <button type="button" class="league-tab-btn tab-super active" id="tabBtnSuper" onclick="switchLeagueTable('super')">
+            スーパーリーグ
+          </button>
+          <button type="button" class="league-tab-btn tab-ultra" id="tabBtnUltra" onclick="switchLeagueTable('ultra')">
+            ハイパーリーグ
+          </button>
+        </div>
+
+        <div class="sl-header">
+          <div class="sl-title" id="leagueTableTitle">
+            <span>🏆 スーパーリーグで使えるポケモン一覧</span>
+          </div>
+          <span class="sl-badge" id="leagueTableBadge" style="background-color:#1976d2;">CP 1500</span>
+        </div>
+        <div class="sl-hint">※行または「選択」をタップするとそのポケモンが切り替わり、個体値をチェックできます</div>
+        <div class="sl-table-wrapper">
+          <table class="sl-table">
+            <thead>
+              <tr>
+                <th>ポケモン</th>
+                <th style="text-align:center;">1位個体値<br><span style="font-size:10px; font-weight:normal; color:#555;">(攻-防-HP)</span></th>
+                <th>1位CP (Lv)</th>
+                <th style="text-align:center;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="leagueTableBody">
+              <!-- JavaScriptで動的生成 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- タイプ別レイドアタッカー上位30位一覧表 -->
+    <div class="raid-section" id="raidAttackerSection">
+      <div class="accordion-header raid-accordion-header" onclick="toggleRaidSection()">
+        <div class="accordion-title">
+          <span>⚔️ タイプ別レイドアタッカー上位30位一覧</span>
+          <span class="accordion-subtext">(全18タイプ)</span>
+        </div>
+        <span class="collapse-toggle-btn" id="raidAttackerToggleIcon">▼ 開く</span>
+      </div>
+
+      <div id="raidAttackerContent" class="raid-content" style="display: none;">
+        <div class="raid-type-selector-header">
+          <span class="raid-selector-label">🎯 タイプを選択してください：</span>
+        </div>
+        <div class="raid-type-selector" id="raidTypeSelector">
+          <!-- JavaScriptで18タイプボタンを生成 -->
+        </div>
+
+        <div class="raid-header-bar">
+          <div class="raid-header-title" id="raidCurrentTypeTitle">
+            <span>⚔️ ほのおタイプ レイドアタッカー上位30位</span>
+          </div>
+          <span class="raid-type-badge" id="raidCurrentTypeBadge" style="background-color: #F65D34;">ほのお</span>
+        </div>
+        <div class="raid-hint">※ポケモンの総合火力(DPS/ER)に基づく最適技構成ランキングです。登録ポケモンはタップで個体値チェックに切り替わります。</div>
+
+        <div class="raid-table-wrapper">
+          <table class="raid-table">
+            <thead>
+              <tr>
+                <th style="width: 38px; text-align: center;">順位</th>
+                <th>ポケモン</th>
+                <th>ノーマルアタック</th>
+                <th>スペシャルアタック</th>
+              </tr>
+            </thead>
+            <tbody id="raidAttackerTableBody">
+              <!-- JavaScriptで動的生成 -->
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -262,17 +1633,452 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() { navigator.serviceWorker.register('service-worker.js'); });
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('service-worker.js').then(function(reg) {
+          reg.update();
+        });
+      });
     }
     
-    window.onload = function() {
+    const SUPER_LEAGUE_POKEMON = [
+      // 上段 Tier S
+      "オコリザル",
+      "オーダイル",
+      "シャドウオーダイル",
+      "ワタッコ",
+      "フォレトス",
+      "シャドウフォレトス",
+      "ガラルサニーゴ",
+      "キングドラ",
+      "エンペルト",
+      "マッギョ",
+      "ホルード",
+      "カラマネロ",
+      "デンジムシ",
+      "アーマーガア",
+      "フォクスライ",
+      "コノヨザル",
+      "シャドウコノヨザル",
+      "ドオー",
+      // 下段 Tier A+
+      "アローラサンドパン",
+      "シャドウアローラサンドパン",
+      "アローラキュウコン",
+      "アズマオウ",
+      "マリルリ",
+      "ヌオー",
+      "シャドウヌオー",
+      "ノココッチ",
+      "ハリーセン",
+      "シャドウハリーセン",
+      "グラエナ",
+      "シャドウグラエナ",
+      "ヤミラミ",
+      "シャドウヤミラミ",
+      "ブーピッグ",
+      "チルタリス",
+      "トドゼルガ",
+      "シャドウトドゼルガ",
+      "トリトドン",
+      "ギルガルド",
+      "ミミッキュ",
+      "アクジキング",
+      "ウッウ",
+      "モルペコ",
+      // その他登録済みのスーパーリーグ主要ポケモン
+      "ラグラージ",
+      "ブルンゲル",
+      "プクリン",
+      "ベロベルト",
+      "オオタチ",
+      "ドラピオン",
+      "ファイアロー",
+      "フラージェス",
+      "コモルー"
+    ];
+
+    const ULTRA_LEAGUE_POKEMON = [
+      "エンペルト",
+      "ラグラージ",
+      "フラージェス",
+      "アーマーガア",
+      "ラウドボーン",
+      "オーダイル",
+      "シャドウオーダイル",
+      "フォレトス",
+      "シャドウフォレトス",
+      "コノヨザル",
+      "シャドウコノヨザル",
+      "ベロベルト",
+      "ビリジオン",
+      "ガラルマタドガス",
+      "ドククラゲ",
+      "ジガルデ(100%)",
+      "ガラルファイヤー",
+      "デンリュウ",
+      "アクジキング",
+      "ブルンゲル",
+      "ミュウツー",
+      "シャドウミュウツー"
+    ];
+
+    let currentLeagueTab = 'super';
+
+    function initPokemonSelect() {
       const select = document.getElementById('pokemonSelect');
+      select.innerHTML = '';
+
+      // スーパーリーグ主要ポケモン
+      const slGroup = document.createElement('optgroup');
+      slGroup.label = `⭐ スーパーリーグ主要ポケモン (${SUPER_LEAGUE_POKEMON.length}匹)`;
+      SUPER_LEAGUE_POKEMON.forEach(pokemonName => {
+        if (POKEDEX[pokemonName]) {
+          const option = document.createElement('option');
+          option.value = pokemonName;
+          option.textContent = pokemonName;
+          slGroup.appendChild(option);
+        }
+      });
+      select.appendChild(slGroup);
+
+      // ハイパーリーグ主要ポケモン（スーパーリーグにないもの）
+      const ulGroup = document.createElement('optgroup');
+      ulGroup.label = '🔥 ハイパーリーグ主要ポケモン';
+      ULTRA_LEAGUE_POKEMON.forEach(pokemonName => {
+        if (!SUPER_LEAGUE_POKEMON.includes(pokemonName) && POKEDEX[pokemonName]) {
+          const option = document.createElement('option');
+          option.value = pokemonName;
+          option.textContent = pokemonName;
+          ulGroup.appendChild(option);
+        }
+      });
+      select.appendChild(ulGroup);
+
+      // その他の登録ポケモン
+      const otherGroup = document.createElement('optgroup');
+      otherGroup.label = '📋 その他の登録ポケモン';
       for (const pokemonName in POKEDEX) {
-        const option = document.createElement('option');
-        option.value = pokemonName;
-        option.textContent = pokemonName;
-        select.appendChild(option);
+        if (!SUPER_LEAGUE_POKEMON.includes(pokemonName) && !ULTRA_LEAGUE_POKEMON.includes(pokemonName)) {
+          const option = document.createElement('option');
+          option.value = pokemonName;
+          option.textContent = pokemonName;
+          otherGroup.appendChild(option);
+        }
       }
+      select.appendChild(otherGroup);
+    }
+
+    function switchLeagueTable(league) {
+      currentLeagueTab = league;
+      const tabSuper = document.getElementById('tabBtnSuper');
+      const tabUltra = document.getElementById('tabBtnUltra');
+      const title = document.getElementById('leagueTableTitle');
+      const badge = document.getElementById('leagueTableBadge');
+
+      if (tabSuper) tabSuper.textContent = `スーパーリーグ (${SUPER_LEAGUE_POKEMON.length}匹)`;
+      if (tabUltra) tabUltra.textContent = `ハイパーリーグ (${ULTRA_LEAGUE_POKEMON.length}匹)`;
+
+      if (league === 'super') {
+        if (tabSuper) tabSuper.classList.add('active');
+        if (tabUltra) tabUltra.classList.remove('active');
+        title.innerHTML = '<span>🏆 スーパーリーグで使えるポケモン一覧</span>';
+        badge.textContent = 'CP 1500';
+        badge.style.backgroundColor = '#1976d2';
+      } else {
+        if (tabUltra) tabUltra.classList.add('active');
+        if (tabSuper) tabSuper.classList.remove('active');
+        title.innerHTML = '<span>🏆 ハイパーリーグで使えるポケモン一覧</span>';
+        badge.textContent = 'CP 2500';
+        badge.style.backgroundColor = '#f57c00';
+      }
+      renderCurrentLeagueTable();
+    }
+
+    function renderCurrentLeagueTable() {
+      const tbody = document.getElementById('leagueTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const targetList = currentLeagueTab === 'super' ? SUPER_LEAGUE_POKEMON : ULTRA_LEAGUE_POKEMON;
+      const targetCP = currentLeagueTab === 'super' ? 1500 : 2500;
+      const selectedPokemon = document.getElementById('pokemonSelect') ? document.getElementById('pokemonSelect').value : '';
+
+      targetList.forEach(name => {
+        if (!POKEDEX[name]) return;
+        const ranks = getRanking(name, targetCP);
+        const top = ranks.length > 0 ? ranks[0] : null;
+
+        const tr = document.createElement('tr');
+        tr.className = 'sl-table-row' + (name === selectedPokemon ? ' active' : '');
+        tr.dataset.pokemon = name;
+        tr.onclick = function() {
+          selectPokemonFromTable(name);
+        };
+
+        const ivText = top ? `${top.ivA} - ${top.ivD} - ${top.ivH}` : '-';
+        const cpText = top ? `CP ${top.cp} <span style="color:#777; font-size:10px;">(Lv ${top.level})</span>` : 'CP制限超え';
+        const displayName = name.startsWith('シャドウ')
+          ? `<span class="badge-form badge-shadow" style="font-size:10px; padding:1px 5px; border-radius:3px; margin-right:4px;">シャドウ</span>${name.replace('シャドウ', '')}`
+          : name;
+
+        tr.innerHTML = `
+          <td class="sl-name">${displayName}</td>
+          <td class="sl-iv"><span class="iv-badge">${ivText}</span></td>
+          <td class="sl-cp">${cpText}</td>
+          <td class="sl-action"><button type="button" class="btn-select" onclick="event.stopPropagation(); selectPokemonFromTable('${name}');">選択</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ひらがな・カタカナ変換関数（検索利便性向上）
+    function toHiragana(str) {
+      return str.replace(/[\u30a1-\u30f6]/g, m => String.fromCharCode(m.charCodeAt(0) - 0x60));
+    }
+    function toKatakana(str) {
+      return str.replace(/[\u3041-\u3096]/g, m => String.fromCharCode(m.charCodeAt(0) + 0x60));
+    }
+
+    let isDropdownOpen = false;
+
+    function openPokemonDropdown() {
+      const list = document.getElementById('pokemonDropdownList');
+      const arrowBtn = document.getElementById('toggleDropdownBtn');
+      if (!list) return;
+      list.classList.add('show');
+      if (arrowBtn) arrowBtn.classList.add('open');
+      isDropdownOpen = true;
+    }
+
+    function closePokemonDropdown() {
+      const list = document.getElementById('pokemonDropdownList');
+      const arrowBtn = document.getElementById('toggleDropdownBtn');
+      if (!list) return;
+      list.classList.remove('show');
+      if (arrowBtn) arrowBtn.classList.remove('open');
+      isDropdownOpen = false;
+    }
+
+    function togglePokemonDropdown(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (isDropdownOpen) {
+        closePokemonDropdown();
+      } else {
+        const input = document.getElementById('pokemonSearchInput');
+        renderPokemonDropdown(input ? input.value : '');
+        openPokemonDropdown();
+      }
+    }
+
+    function clearPokemonSearch(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const input = document.getElementById('pokemonSearchInput');
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      if (clearBtn) clearBtn.style.display = 'none';
+      renderPokemonDropdown('');
+      openPokemonDropdown();
+    }
+
+    function setPokemon(pokemonName) {
+      const select = document.getElementById('pokemonSelect');
+      const input = document.getElementById('pokemonSearchInput');
+      const clearBtn = document.getElementById('clearSearchBtn');
+
+      if (select) select.value = pokemonName;
+      if (input) input.value = pokemonName;
+      if (clearBtn) clearBtn.style.display = 'block';
+
+      closePokemonDropdown();
+      checkRank();
+      highlightSelectedRow(pokemonName);
+    }
+
+    function renderPokemonDropdown(filterText = '') {
+      const list = document.getElementById('pokemonDropdownList');
+      if (!list) return;
+      list.innerHTML = '';
+
+      const query = (filterText || '').trim();
+      const queryHira = toHiragana(query.toLowerCase());
+      const queryKata = toKatakana(query.toLowerCase());
+
+      const currentSelected = document.getElementById('pokemonSelect') ? document.getElementById('pokemonSelect').value : '';
+
+      // 検索フィルタリング
+      const matches = [];
+      for (const name in POKEDEX) {
+        if (!query) {
+          matches.push(name);
+        } else {
+          const nameHira = toHiragana(name.toLowerCase());
+          const nameKata = toKatakana(name.toLowerCase());
+          if (nameHira.includes(queryHira) || nameKata.includes(queryKata)) {
+            matches.push(name);
+          }
+        }
+      }
+
+      if (matches.length === 0) {
+        list.innerHTML = `<div class="no-results">「${filterText}」に一致するポケモンが見つかりません</div>`;
+        return;
+      }
+
+      // 検索時でなく全件表示の時はグループ分けして見やすくする
+      if (!query) {
+        // スーパーリーグ主要
+        const slMatches = matches.filter(m => SUPER_LEAGUE_POKEMON.includes(m));
+        if (slMatches.length > 0) {
+          const header = document.createElement('div');
+          header.className = 'dropdown-group-header';
+          header.textContent = '⭐ スーパーリーグ主要ポケモン';
+          list.appendChild(header);
+          slMatches.forEach(name => appendDropdownItem(list, name, 'スーパー', currentSelected));
+        }
+
+        // ハイパーリーグ主要（スーパーリーグにないもの）
+        const ulMatches = matches.filter(m => ULTRA_LEAGUE_POKEMON.includes(m) && !SUPER_LEAGUE_POKEMON.includes(m));
+        if (ulMatches.length > 0) {
+          const header = document.createElement('div');
+          header.className = 'dropdown-group-header';
+          header.textContent = '🔥 ハイパーリーグ主要ポケモン';
+          list.appendChild(header);
+          ulMatches.forEach(name => appendDropdownItem(list, name, 'ハイパー', currentSelected));
+        }
+
+        // その他
+        const otherMatches = matches.filter(m => !SUPER_LEAGUE_POKEMON.includes(m) && !ULTRA_LEAGUE_POKEMON.includes(m));
+        if (otherMatches.length > 0) {
+          const header = document.createElement('div');
+          header.className = 'dropdown-group-header';
+          header.textContent = '📋 その他の登録ポケモン';
+          list.appendChild(header);
+          otherMatches.forEach(name => appendDropdownItem(list, name, '', currentSelected));
+        }
+      } else {
+        // 検索クエリがある場合：一致リストをフラットに表示
+        matches.forEach(name => {
+          let badge = '';
+          if (SUPER_LEAGUE_POKEMON.includes(name) && ULTRA_LEAGUE_POKEMON.includes(name)) {
+            badge = 'スーパー/ハイパー';
+          } else if (SUPER_LEAGUE_POKEMON.includes(name)) {
+            badge = 'スーパー';
+          } else if (ULTRA_LEAGUE_POKEMON.includes(name)) {
+            badge = 'ハイパー';
+          }
+          appendDropdownItem(list, name, badge, currentSelected);
+        });
+      }
+    }
+
+    function appendDropdownItem(parent, name, badgeText, currentSelected) {
+      const item = document.createElement('div');
+      item.className = 'dropdown-item' + (name === currentSelected ? ' selected' : '');
+      item.dataset.pokemon = name;
+      item.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPokemon(name);
+      };
+
+      let badgeHtml = '';
+      if (badgeText.includes('スーパー') && badgeText.includes('ハイパー')) {
+        badgeHtml = `<span class="dropdown-item-badge badge-super-mini">スーパー</span> <span class="dropdown-item-badge badge-ultra-mini">ハイパー</span>`;
+      } else if (badgeText === 'スーパー') {
+        badgeHtml = `<span class="dropdown-item-badge badge-super-mini">スーパー</span>`;
+      } else if (badgeText === 'ハイパー') {
+        badgeHtml = `<span class="dropdown-item-badge badge-ultra-mini">ハイパー</span>`;
+      }
+
+      const displayName = name.startsWith('シャドウ')
+        ? `<span class="badge-form badge-shadow" style="font-size:10px; padding:1px 5px; border-radius:3px; margin-right:4px;">シャドウ</span>${name.replace('シャドウ', '')}`
+        : name;
+
+      item.innerHTML = `<span>${displayName}</span><div>${badgeHtml}</div>`;
+      parent.appendChild(item);
+    }
+
+    function initSearchSelect() {
+      const input = document.getElementById('pokemonSearchInput');
+      const clearBtn = document.getElementById('clearSearchBtn');
+      const container = document.getElementById('searchSelectContainer');
+      const select = document.getElementById('pokemonSelect');
+
+      if (select && select.value && input) {
+        input.value = select.value;
+        if (clearBtn) clearBtn.style.display = 'block';
+      }
+
+      if (input) {
+        input.addEventListener('focus', () => {
+          renderPokemonDropdown(input.value);
+          openPokemonDropdown();
+        });
+
+        input.addEventListener('input', () => {
+          const val = input.value;
+          if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+          renderPokemonDropdown(val);
+          openPokemonDropdown();
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            const list = document.getElementById('pokemonDropdownList');
+            const items = list.querySelectorAll('.dropdown-item');
+            if (items.length > 0) {
+              const targetName = items[0].dataset.pokemon;
+              setPokemon(targetName);
+              input.blur();
+            }
+          } else if (e.key === 'Escape') {
+            closePokemonDropdown();
+          }
+        });
+      }
+
+      // 外側クリックで閉じる
+      document.addEventListener('click', (e) => {
+        if (container && !container.contains(e.target)) {
+          closePokemonDropdown();
+        }
+      });
+    }
+
+    function selectPokemonFromTable(name) {
+      setPokemon(name);
+      const searchContainer = document.getElementById('searchSelectContainer');
+      if (searchContainer) {
+        searchContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function highlightSelectedRow(name) {
+      const rows = document.querySelectorAll('.sl-table-row');
+      rows.forEach(r => {
+        if (r.dataset.pokemon === name) {
+          r.classList.add('active');
+        } else {
+          r.classList.remove('active');
+        }
+      });
+    }
+
+    window.onload = function() {
+      initPokemonSelect();
+      initSearchSelect();
+      switchLeagueTable('super');
+      initRaidSection();
+
       // 初期描画
       updateGauge('Atk');
       updateGauge('Def');
@@ -307,27 +2113,30 @@
         const dt = e.dataTransfer;
         const files = dt.files;
         if (files && files.length > 0) {
-          processImageFile(files[0]);
+          processImageFiles(Array.from(files));
         }
       });
 
       // クリップボードからのペースト対応
       window.addEventListener('paste', (e) => {
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        const imageFiles = [];
         for (const item of items) {
           if (item.kind === 'file' && item.type.startsWith('image/')) {
             const blob = item.getAsFile();
-            processImageFile(blob);
-            break;
+            if (blob) imageFiles.push(blob);
           }
+        }
+        if (imageFiles.length > 0) {
+          processImageFiles(imageFiles);
         }
       });
     }
 
     function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (file) {
-        processImageFile(file);
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        processImageFiles(Array.from(files));
       }
     }
 
@@ -345,67 +2154,310 @@
       badge.style.display = 'block';
     }
 
+    let currentBatchResults = [];
+    let activeBatchIndex = -1;
+
     function clearLoadedImage() {
       document.getElementById('imageInput').value = '';
       document.getElementById('previewContainer').style.display = 'none';
       document.getElementById('previewImg').src = '';
+      clearBatchResults();
+    }
+
+    function clearBatchResults() {
+      document.getElementById('imageInput').value = '';
+      const batchContainer = document.getElementById('batchResultsContainer');
+      if (batchContainer) batchContainer.style.display = 'none';
+      const batchList = document.getElementById('batchResultsList');
+      if (batchList) batchList.innerHTML = '';
+      currentBatchResults = [];
+      activeBatchIndex = -1;
       setStatus(null, '');
     }
 
-    function processImageFile(file) {
-      if (!file || !file.type.startsWith('image/')) {
+    function analyzeSingleFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました。'));
+        reader.onload = function(e) {
+          const dataUrl = e.target.result;
+          const img = new Image();
+          img.onerror = () => reject(new Error('画像の展開に失敗しました。'));
+          img.onload = function() {
+            try {
+              const iv = analyzeIVFromImage(img);
+              const detectedPokemon = identifyPokemonFromImage(img);
+
+              let ranks = null;
+              if (detectedPokemon && typeof getRanking === 'function') {
+                const ranksGreat = getRanking(detectedPokemon, 1500);
+                const rankG = ranksGreat.find(r => r.ivA === iv.atk && r.ivD === iv.def && r.ivH === iv.hp);
+
+                const ranksUltra = getRanking(detectedPokemon, 2500);
+                const rankU = ranksUltra.find(r => r.ivA === iv.atk && r.ivD === iv.def && r.ivH === iv.hp);
+
+                const ranksMaster = getRanking(detectedPokemon, 'master');
+                const rankM = ranksMaster.find(r => r.ivA === iv.atk && r.ivD === iv.def && r.ivH === iv.hp);
+
+                ranks = {
+                  great: rankG ? { rank: rankG.rank, cp: rankG.cp, level: rankG.level } : null,
+                  ultra: rankU ? { rank: rankU.rank, cp: rankU.cp, level: rankU.level } : null,
+                  master: rankM ? { rank: rankM.rank, cp: rankM.cp, level: rankM.level } : null
+                };
+              }
+
+              resolve({
+                file: file,
+                fileName: file.name || '画像',
+                thumbUrl: dataUrl,
+                atk: iv.atk,
+                def: iv.def,
+                hp: iv.hp,
+                pokemonName: detectedPokemon,
+                ranks: ranks,
+                error: null
+              });
+            } catch (err) {
+              reject(err);
+            }
+          };
+          img.src = dataUrl;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function processImageFiles(files) {
+      const imageFiles = files.filter(f => f && f.type && f.type.startsWith('image/'));
+      if (imageFiles.length === 0) {
         setStatus('error', '⚠️ 画像ファイルを選択してください。');
         return;
       }
 
+      // 1枚のみの場合は単一表示モード
+      if (imageFiles.length === 1) {
+        clearBatchResults();
+        await processSingleImageFile(imageFiles[0]);
+        return;
+      }
+
+      // 複数枚の場合
+      document.getElementById('previewContainer').style.display = 'none';
+      const batchContainer = document.getElementById('batchResultsContainer');
+      if (batchContainer) batchContainer.style.display = 'block';
+
+      setStatus('loading', `⏳ 複数画像を解析中... (0 / ${imageFiles.length} 枚)`);
+
+      const results = [];
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
+        setStatus('loading', `⏳ 複数画像を解析中... (${i + 1} / ${imageFiles.length} 枚: ${file.name || ''})`);
+        try {
+          const res = await analyzeSingleFile(file);
+          results.push(res);
+        } catch (err) {
+          console.error(err);
+          results.push({
+            file: file,
+            fileName: file.name || `画像 ${i + 1}`,
+            thumbUrl: '',
+            error: err.message || '個体値バーを認識できませんでした',
+            atk: null, def: null, hp: null,
+            pokemonName: null,
+            ranks: null
+          });
+        }
+      }
+
+      currentBatchResults = results;
+      const successCount = results.filter(r => !r.error).length;
+      setStatus('success', `✅ <b>一括解析完了！</b> 全 ${results.length} 枚中 ${successCount} 枚の解析に成功しました。行をタップして詳細を確認できます。`);
+
+      renderBatchResults();
+
+      // 最初の成功アイテムを自動反映
+      const firstSuccessIdx = results.findIndex(r => !r.error);
+      if (firstSuccessIdx !== -1) {
+        selectBatchItem(firstSuccessIdx, false);
+      } else if (results.length > 0) {
+        selectBatchItem(0, false);
+      }
+    }
+
+    async function processSingleImageFile(file) {
       setStatus('loading', '⏳ 画像を解析中... 個体値バーを読み取っています');
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          // プレビュー表示
-          const previewContainer = document.getElementById('previewContainer');
-          const previewImg = document.getElementById('previewImg');
-          const previewName = document.getElementById('previewName');
-          previewImg.src = e.target.result;
-          previewName.textContent = file.name || '読み込んだ画像';
-          previewContainer.style.display = 'flex';
+      try {
+        const res = await analyzeSingleFile(file);
 
-          // 個体値解析
-          try {
-            const result = analyzeIVFromImage(img);
-            // スライダー・ゲージに反映
-            document.getElementById('ivAtk').value = result.atk;
-            document.getElementById('ivDef').value = result.def;
-            document.getElementById('ivHp').value = result.hp;
-            updateGauge('Atk');
-            updateGauge('Def');
-            updateGauge('Hp');
+        // プレビュー表示
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImg = document.getElementById('previewImg');
+        const previewName = document.getElementById('previewName');
+        if (previewImg) previewImg.src = res.thumbUrl;
+        if (previewName) previewName.textContent = res.fileName;
+        if (previewContainer) previewContainer.style.display = 'flex';
 
-            // ポケモン名（どのポケモンか）の自動識別
-            const detectedPokemon = identifyPokemonFromImage(img);
-            if (detectedPokemon) {
-              const select = document.getElementById('pokemonSelect');
-              select.value = detectedPokemon;
-            }
+        // スライダー・ゲージに反映
+        document.getElementById('ivAtk').value = res.atk;
+        document.getElementById('ivDef').value = res.def;
+        document.getElementById('ivHp').value = res.hp;
+        updateGauge('Atk');
+        updateGauge('Def');
+        updateGauge('Hp');
 
-            checkRank();
+        if (res.pokemonName) {
+          setPokemon(res.pokemonName);
+        } else {
+          checkRank();
+        }
 
-            let msg = `✅ <b>解析成功！</b> `;
-            if (detectedPokemon) {
-              msg += `ポケモン: <b>${detectedPokemon}</b><br>`;
-            }
-            msg += `こうげき: <b>${result.atk}</b> / ぼうぎょ: <b>${result.def}</b> / HP: <b>${result.hp}</b>`;
-            setStatus('success', msg);
-          } catch (err) {
-            console.error(err);
-            setStatus('error', '⚠️ ' + (err.message || '個体値バーを認識できませんでした。リーダー評価画面の画像をお試しください。'));
+        let msg = `✅ <b>解析成功！</b> `;
+        if (res.pokemonName) {
+          msg += `ポケモン: <b>${res.pokemonName}</b><br>`;
+        }
+        msg += `こうげき: <b>${res.atk}</b> / ぼうぎょ: <b>${res.def}</b> / HP: <b>${res.hp}</b>`;
+        setStatus('success', msg);
+      } catch (err) {
+        console.error(err);
+        setStatus('error', '⚠️ ' + (err.message || '個体値バーを認識できませんでした。リーダー評価画面の画像をお試しください。'));
+      }
+    }
+
+    // 互換性のためのエイリアス
+    function processImageFile(file) {
+      if (file) processImageFiles([file]);
+    }
+
+    function selectBatchItem(index) {
+      if (index < 0 || index >= currentBatchResults.length) return;
+      activeBatchIndex = index;
+
+      // カードのactiveクラスを更新
+      const cards = document.querySelectorAll('.batch-card');
+      cards.forEach((card, i) => {
+        if (i === index) card.classList.add('active');
+        else card.classList.remove('active');
+      });
+
+      const item = currentBatchResults[index];
+      if (item.error) {
+        return;
+      }
+
+      // スライダー・ゲージに反映
+      document.getElementById('ivAtk').value = item.atk;
+      document.getElementById('ivDef').value = item.def;
+      document.getElementById('ivHp').value = item.hp;
+      updateGauge('Atk');
+      updateGauge('Def');
+      updateGauge('Hp');
+
+      if (item.pokemonName) {
+        setPokemon(item.pokemonName);
+      } else {
+        checkRank();
+      }
+    }
+
+    function renderBatchResults() {
+      const container = document.getElementById('batchResultsList');
+      const countBadge = document.getElementById('batchCountBadge');
+      if (!container) return;
+
+      if (countBadge) {
+        countBadge.textContent = `${currentBatchResults.length}枚`;
+      }
+
+      let html = '';
+      currentBatchResults.forEach((item, idx) => {
+        const isActive = (idx === activeBatchIndex);
+        if (item.error) {
+          html += `
+            <div class="batch-card batch-error-card ${isActive ? 'active' : ''}" onclick="selectBatchItem(${idx})">
+              <div class="batch-card-num">${idx + 1}</div>
+              <div class="batch-thumb-placeholder">⚠️</div>
+              <div class="batch-info">
+                <div class="batch-pokemon-name" style="color: #c62828;">解析エラー</div>
+                <div class="batch-iv-row" style="color: #c62828; font-size: 11px;">
+                  ${item.fileName}: ${item.error}
+                </div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        const totalIv = item.atk + item.def + item.hp;
+        const ivPct = ((totalIv / 45) * 100).toFixed(1);
+
+        let leagueHtml = '';
+        if (item.ranks) {
+          if (item.ranks.great) {
+            const isHighlight = item.ranks.great.rank <= 50;
+            leagueHtml += `
+              <span class="batch-league-pill batch-league-great ${isHighlight ? 'batch-rank-highlight' : ''}">
+                SL: ${item.ranks.great.rank}位 (CP ${item.ranks.great.cp})
+              </span>
+            `;
           }
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+          if (item.ranks.ultra) {
+            const isHighlight = item.ranks.ultra.rank <= 50;
+            leagueHtml += `
+              <span class="batch-league-pill batch-league-ultra ${isHighlight ? 'batch-rank-highlight' : ''}">
+                UL: ${item.ranks.ultra.rank}位 (CP ${item.ranks.ultra.cp})
+              </span>
+            `;
+          }
+          if (item.ranks.master) {
+            const isHighlight = item.ranks.master.rank <= 10;
+            leagueHtml += `
+              <span class="batch-league-pill batch-league-master ${isHighlight ? 'batch-rank-highlight' : ''}">
+                ML: ${item.ranks.master.rank}位
+              </span>
+            `;
+          }
+        } else if (item.pokemonName) {
+          leagueHtml = '<span style="font-size:11px; color:#888;">(リーグ順位データなし)</span>';
+        } else {
+          leagueHtml = '<span style="font-size:11px; color:#e65100;">⚠️ ポケモン未特定 (タップで反映・選択)</span>';
+        }
+
+        const pokemonDisplay = item.pokemonName 
+          ? (item.pokemonName.startsWith('シャドウ')
+              ? `<span class="badge-form badge-shadow" style="font-size:10px; padding:1px 4px; border-radius:3px; margin-right:4px;">シャドウ</span><b>${item.pokemonName.replace('シャドウ', '')}</b>`
+              : `<b>${item.pokemonName}</b>`)
+          : `<span style="color:#d84315;">未特定のポケモン</span>`;
+
+        html += `
+          <div class="batch-card ${isActive ? 'active' : ''}" onclick="selectBatchItem(${idx})">
+            <div class="batch-card-num">${idx + 1}</div>
+            <img class="batch-thumb" src="${item.thumbUrl}" alt="サムネイル">
+            <div class="batch-info">
+              <div class="batch-name-row">
+                <span class="batch-pokemon-name">${pokemonDisplay}</span>
+                <span class="batch-iv-pct">${ivPct}%</span>
+              </div>
+              <div class="batch-iv-row">
+                <span class="batch-iv-tag">攻 ${item.atk}</span>
+                <span class="batch-iv-tag">防 ${item.def}</span>
+                <span class="batch-iv-tag">HP ${item.hp}</span>
+                <span style="font-size:11px; color:#666;">計 ${totalIv}/45</span>
+              </div>
+              <div class="batch-leagues-row">
+                ${leagueHtml}
+              </div>
+            </div>
+            <div class="batch-action-col">
+              <button type="button" class="btn-batch-select" onclick="event.stopPropagation(); selectBatchItem(${idx});">
+                ${isActive ? '選択中' : '反映'}
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
     }
 
     // Canvasによるリーダー評価バーの高速・高精度ピクセル解析
@@ -431,11 +2483,13 @@
 
       // バーの塗り判定（オレンジまたはMAX赤）
       function isBarFill(r, g, b) {
-        // オレンジ: R高(>190), G中(90-195), B低(<95)
-        const isOrange = (r > 190 && g > 90 && g < 195 && b < 95);
-        // 赤 (15満タン時): R高(>200), G低(<90), B低(<90)
-        const isRed = (r > 200 && g < 90 && b < 90);
-        return isOrange || isRed;
+        // オレンジ: R高(>190), G中(90-195), B低(<110)
+        const isOrange = (r > 190 && g > 90 && g < 195 && b < 110);
+        // 赤 (15満タン時): R高(>200), G中(95-160), B中(95-160), かつ (r - g) > 50, (r - b) > 50
+        const isRed = (r > 200 && g > 95 && g < 160 && b > 95 && b < 160 && (r - g) > 50 && (r - b) > 50);
+        // クラシック赤 (R単独突出)
+        const isClassicRed = (r > 190 && g < 100 && b < 100);
+        return isOrange || isRed || isClassicRed;
       }
 
       // バーの空背景判定（薄いグレー）
@@ -479,7 +2533,15 @@
               }
             }
             if (!resumes) {
-              break;
+              if ((barEnd - barStart) >= Math.floor(w * 0.10)) {
+                break;
+              } else {
+                inBar = false;
+                barStart = -1;
+                barEnd = -1;
+                fillMax = -1;
+                orangeCount = 0;
+              }
             }
           }
         }
@@ -490,9 +2552,9 @@
         return null;
       }
 
-      // 画面下半分 (y: 0.50*h 〜 0.92*h) をスキャン
+      // 画面下半分 (y: 0.50*h 〜 0.99*h) をスキャン
       const minY = Math.floor(h * 0.50);
-      const maxY = Math.floor(h * 0.92);
+      const maxY = Math.floor(h * 0.99);
       const stepY = Math.max(1, Math.floor(h * 0.002));
       const candidateRows = [];
 
@@ -537,17 +2599,22 @@
       // Y座標順にソート
       validClusters.sort((a, b) => a[0].y - b[0].y);
 
-      // 3本以上ある場合、バー間の間隔が最も近い3本を選択
+      // 3本以上ある場合、バー間の間隔が最も均等かつ開始X位置が揃っている3本を選択
       let bestTrio = validClusters.slice(0, 3);
       if (validClusters.length > 3) {
-        let minDiff = Infinity;
+        let minScore = Infinity;
         for (let i = 0; i <= validClusters.length - 3; i++) {
           const y0 = validClusters[i][Math.floor(validClusters[i].length / 2)].y;
           const y1 = validClusters[i+1][Math.floor(validClusters[i+1].length / 2)].y;
           const y2 = validClusters[i+2][Math.floor(validClusters[i+2].length / 2)].y;
           const diff = Math.abs((y1 - y0) - (y2 - y1));
-          if (diff < minDiff) {
-            minDiff = diff;
+          const s0 = validClusters[i][0].barStart;
+          const s1 = validClusters[i+1][0].barStart;
+          const s2 = validClusters[i+2][0].barStart;
+          const startDiff = Math.abs(s0 - s1) + Math.abs(s1 - s2);
+          const score = diff + startDiff * 2;
+          if (score < minScore) {
+            minScore = score;
             bestTrio = [validClusters[i], validClusters[i+1], validClusters[i+2]];
           }
         }
@@ -618,26 +2685,131 @@
         return { r: data[idx], g: data[idx+1], b: data[idx+2] };
       }
 
-      // 1. ポケモン名テキスト領域の走査（y: 0.495*h 〜 0.535*h, x: 0.20*w 〜 0.70*w）
-      // ペンマーク（右側）や性別マーク、下部のHPバーを避ける最適な座標範囲
-      const textMinY = Math.floor(h * 0.495);
-      const textMaxY = Math.floor(h * 0.535);
-      const textMinX = Math.floor(w * 0.20);
-      const textMaxX = Math.floor(w * 0.70);
+      // シャドウポケモンの特徴検出（紫色の炎オーラ、赤い眼、外周の紫煙）
+      let flamePixels = 0;
+      const flameMinY = Math.floor(h * 0.12);
+      const flameMaxY = Math.floor(h * 0.45);
+      const flameMinX = Math.floor(w * 0.15);
+      const flameMaxX = Math.floor(w * 0.85);
+
+      for (let y = flameMinY; y < flameMaxY; y += 2) {
+        for (let x = flameMinX; x < flameMaxX; x += 2) {
+          const idx = (y * w + x) * 4;
+          const r = data[idx], g = data[idx+1], b = data[idx+2];
+          if (b >= 160 && g <= 75 && r >= 60 && (b - g) >= 95 && (r - g) >= 15) {
+            flamePixels++;
+          }
+        }
+      }
+
+      let redEyes = 0;
+      const eyeMinY = Math.floor(h * 0.12);
+      const eyeMaxY = Math.floor(h * 0.32);
+      const eyeMinX = Math.floor(w * 0.38);
+      const eyeMaxX = Math.floor(w * 0.62);
+      for (let y = eyeMinY; y < eyeMaxY; y++) {
+        for (let x = eyeMinX; x < eyeMaxX; x++) {
+          const idx = (y * w + x) * 4;
+          const r = data[idx], g = data[idx+1], b = data[idx+2];
+          if (r > 160 && g < 70 && b < 70) {
+            redEyes++;
+          }
+        }
+      }
+
+      let flankSmoke = 0;
+      const flankMinY = Math.floor(h * 0.18);
+      const flankMaxY = Math.floor(h * 0.35);
+      const leftX = [Math.floor(w * 0.15), Math.floor(w * 0.30)];
+      const rightX = [Math.floor(w * 0.70), Math.floor(w * 0.85)];
+
+      for (let y = flankMinY; y < flankMaxY; y += 2) {
+        for (let x = leftX[0]; x < leftX[1]; x += 2) {
+          const idx = (y * w + x) * 4;
+          const r = data[idx], g = data[idx+1], b = data[idx+2];
+          if (b >= 90 && r >= 40 && g <= 80 && (b - g) >= 40 && (r - g) >= 10) {
+            flankSmoke++;
+          }
+        }
+        for (let x = rightX[0]; x < rightX[1]; x += 2) {
+          const idx = (y * w + x) * 4;
+          const r = data[idx], g = data[idx+1], b = data[idx+2];
+          if (b >= 90 && r >= 40 && g <= 80 && (b - g) >= 40 && (r - g) >= 10) {
+            flankSmoke++;
+          }
+        }
+      }
+
+      const isShadow = (flamePixels >= 150) && (redEyes >= 5 || flankSmoke >= 250);
+
+      // ミュウツー体色特徴（ラベンダーホワイトの体と紫色の腹部）
+      let whiteBody = 0, purpleBelly = 0;
+      for (let y = Math.floor(h * 0.12); y < Math.floor(h * 0.42); y += 2) {
+        for (let x = Math.floor(w * 0.30); x < Math.floor(w * 0.70); x += 2) {
+          const p = getPixel(x, y);
+          if (p.r > 180 && p.g > 180 && p.b > 190 && Math.abs(p.r - p.g) < 25 && Math.abs(p.g - p.b) < 25) {
+            whiteBody++;
+          } else if (p.r > 120 && p.r < 195 && p.g > 90 && p.g < 165 && p.b > 150 && p.b < 225 && (p.b - p.g) > 20) {
+            purpleBelly++;
+          }
+        }
+      }
+      const isMewtwoVisual = (whiteBody > 3000 && purpleBelly > 600);
+
+      // 1. ポケモン名テキスト領域の動的走査（y: 0.42*h 〜 0.55*h, x: 0.15*w 〜 0.75*w）
+      // 相棒リボンやネームタグによる位置上下変動に対応
+      const scanYStart = Math.floor(h * 0.42);
+      const scanYEnd = Math.floor(h * 0.55);
+      const textMinX = Math.floor(w * 0.15);
+      const textMaxX = Math.floor(w * 0.75);
+
+      const rowTextCounts = [];
+      for (let y = scanYStart; y < scanYEnd; y++) {
+        let cnt = 0;
+        for (let x = textMinX; x < textMaxX; x++) {
+          const p = getPixel(x, y);
+          const lum = 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
+          if (lum < 185 && p.r < 200 && p.g < 200 && p.b < 200) cnt++;
+        }
+        rowTextCounts.push({ y, cnt });
+      }
+
+      // 連続する文字行の塊（バンド）を検出
+      const textBands = [];
+      let inBand = false, bStart = -1;
+      for (const item of rowTextCounts) {
+        if (item.cnt >= 15) {
+          if (!inBand) { inBand = true; bStart = item.y; }
+        } else {
+          if (inBand) {
+            inBand = false;
+            textBands.push({ start: bStart, end: item.y - 1, h: item.y - bStart });
+          }
+        }
+      }
+      if (inBand) textBands.push({ start: bStart, end: scanYEnd - 1, h: scanYEnd - bStart });
+
+      let textMinY = Math.floor(h * 0.495);
+      let textMaxY = Math.floor(h * 0.540);
+      const validNameBands = textBands.filter(b => b.h >= 15);
+      if (validNameBands.length > 0) {
+        textMinY = validNameBands[0].start;
+        textMaxY = validNameBands[0].end + 1;
+      }
 
       const colCounts = new Array(textMaxX - textMinX).fill(0);
       for (let x = textMinX; x < textMaxX; x++) {
         for (let y = textMinY; y < textMaxY; y++) {
           const p = getPixel(x, y);
           const lum = 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
-          if (lum < 165 && p.r < 180 && p.g < 180 && p.b < 180) {
+          if (lum < 185 && p.r < 200 && p.g < 200 && p.b < 200) {
             colCounts[x - textMinX]++;
           }
         }
       }
 
       // 文字列の各文字ブロック（列の塊）を抽出
-      const charBlocks = [];
+      const rawBlocks = [];
       let inBlock = false;
       let blockStart = -1;
       for (let i = 0; i < colCounts.length; i++) {
@@ -651,23 +2823,55 @@
           if (inBlock) {
             inBlock = false;
             const blockEnd = textMinX + i - 1;
-            const blockW = blockEnd - blockStart + 1;
-            if (blockW >= 8) {
-              charBlocks.push({ start: blockStart, end: blockEnd, width: blockW });
-            }
+            rawBlocks.push({ start: blockStart, end: blockEnd });
           }
         }
       }
 
-      // 右端のペンマークや孤立ブロックを除外
-      const filteredBlocks = [];
-      for (let i = 0; i < charBlocks.length; i++) {
-        if (i > 0) {
-          const gap = charBlocks[i].start - charBlocks[i-1].end;
-          // 文字間の通常ギャップ（10〜20px）を超える大きな隙間（25px以上）があればペンマーク
-          if (gap >= 25) break;
+      if (rawBlocks.length === 0) return null;
+
+      // 濁点・半濁点や近接ストロークをマージ
+      // （細いストロークや濁点・半濁点、ハの字などの構成要素同士のみを結合し、独立した文字同士の誤結合を防ぐ）
+      const mergedBlocks = [];
+      for (const b of rawBlocks) {
+        if (mergedBlocks.length === 0) {
+          mergedBlocks.push(b);
+        } else {
+          const prev = mergedBlocks[mergedBlocks.length - 1];
+          const gap = b.start - prev.end - 1;
+          const combinedW = b.end - prev.start + 1;
+          const prevW = prev.end - prev.start + 1;
+          const bW = b.end - b.start + 1;
+          const isSubStroke = (prevW <= 15 || bW <= 15);
+          if (isSubStroke && gap <= 10 && combinedW <= 36) {
+            prev.end = b.end;
+          } else if (gap <= 2 && combinedW <= 36) {
+            prev.end = b.end;
+          } else {
+            mergedBlocks.push(b);
+          }
         }
-        filteredBlocks.push(charBlocks[i]);
+      }
+
+      // 右端のペンマークを除外（マージ後、末尾ブロックとのギャップが 13px 以上の場合）
+      if (mergedBlocks.length >= 2) {
+        const lastGap = mergedBlocks[mergedBlocks.length - 1].start - mergedBlocks[mergedBlocks.length - 2].end - 1;
+        if (lastGap >= 13) {
+          mergedBlocks.pop();
+        }
+      }
+
+      // 極端に幅が広いブロック（>= 50px）は接触した2文字として分割
+      const filteredBlocks = [];
+      for (const b of mergedBlocks) {
+        const bw = b.end - b.start + 1;
+        if (bw >= 50) {
+          const mid = b.start + Math.floor(bw / 2);
+          filteredBlocks.push({ start: b.start, end: mid - 2 });
+          filteredBlocks.push({ start: mid + 2, end: b.end });
+        } else if (bw >= 8) {
+          filteredBlocks.push(b);
+        }
       }
 
       if (filteredBlocks.length === 0) return null;
@@ -680,7 +2884,7 @@
           for (let x = block.start; x <= block.end; x++) {
             const p = getPixel(x, y);
             const lum = 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
-            if (lum < 165) {
+            if (lum < 185 && p.r < 200 && p.g < 200 && p.b < 200) {
               if (y < cMinY) cMinY = y;
               if (y > cMaxY) cMaxY = y;
             }
@@ -696,7 +2900,7 @@
             const sy = Math.floor(cMinY + (ny / 24) * cH);
             const p = getPixel(sx, sy);
             const lum = 0.299 * p.r + 0.587 * p.g + 0.114 * p.b;
-            arr[ny * 24 + nx] = lum < 165 ? 1.0 : 0.0;
+            arr[ny * 24 + nx] = (lum < 185 && p.r < 200 && p.g < 200 && p.b < 200) ? 1.0 : 0.0;
           }
         }
         targetBitmaps.push(arr);
@@ -772,6 +2976,9 @@
       const detectedLen = targetBitmaps.length;
 
       for (const pokeName in POKEDEX) {
+        // スクリーンショット内の表示名は通常種基準のためシャドウ名はスキップ
+        if (pokeName.startsWith('シャドウ')) continue;
+
         let score = 0;
         const len = Math.min(pokeName.length, detectedLen);
         for (let i = 0; i < len; i++) {
@@ -781,11 +2988,16 @@
           score += sim;
         }
 
+        const avgMatch = len > 0 ? score / len : 0;
+
         // 文字数の一致度ボーナス
         if (pokeName.length === detectedLen) {
           score *= 1.35;
+        } else if (detectedLen > pokeName.length && avgMatch >= 0.45) {
+          // 接尾辞つきニックネーム（例: 「メタグロスFFC」「カイリュー98」など）
+          score *= 1.25;
         } else {
-          score *= Math.max(0.3, 1.0 - Math.abs(pokeName.length - detectedLen) * 0.2);
+          score *= Math.max(0.2, 1.0 - Math.abs(pokeName.length - detectedLen) * 0.2);
         }
 
         // カラー一致ボーナス
@@ -796,8 +3008,32 @@
         scores.push({ name: pokeName, score });
       }
 
+      // 1. ミュウツー体色特徴の一致を最優先判定（ニックネーム等によるテキスト誤認を防止）
+      if (isMewtwoVisual) {
+        if (isShadow && POKEDEX['シャドウミュウツー']) {
+          return 'シャドウミュウツー';
+        }
+        return 'ミュウツー';
+      }
+
       scores.sort((a, b) => b.score - a.score);
-      return scores.length > 0 && scores[0].score > 0.8 ? scores[0].name : null;
+      let identified = null;
+      if (scores.length > 0) {
+        const top = scores[0];
+        // 十分な一致スコア（文字平均0.50以上かつ総スコア1.5以上）がある場合のみ採用
+        if (top.avgMatch >= 0.50 && top.score >= 1.5) {
+          identified = top.name;
+        }
+      }
+
+      // シャドウ形態の自動適用
+      if (identified) {
+        if (isShadow && POKEDEX['シャドウ' + identified]) {
+          return 'シャドウ' + identified;
+        }
+        return identified;
+      }
+      return null;
     }
 
     // 視覚的ゲージと数値を連動させる関数
@@ -838,6 +3074,20 @@
     let rankingCache = {};
 
     function calculateGBLStats(baseAtk, baseDef, baseHp, ivA, ivD, ivH, targetCP = 1500) {
+      if (targetCP === 'master' || targetCP === Infinity) {
+        // マスターリーグ（CP上限なし、最大レベル50.0で計算）
+        const cpm = cpmTable[98]; // Level 50.0
+        const level = 50.0;
+        const atk = baseAtk + ivA;
+        const def = baseDef + ivD;
+        const hp = baseHp + ivH;
+        const cp = Math.max(10, Math.floor((atk * Math.sqrt(def) * Math.sqrt(hp) * Math.pow(cpm, 2)) / 10));
+        const realAtk = atk * cpm;
+        const realDef = def * cpm;
+        const realHp = Math.floor(hp * cpm);
+        return { level, cp, statProduct: realAtk * realDef * realHp, ivA, ivD, ivH };
+      }
+
       let bestStat = null;
       for (let i = 0; i < cpmTable.length; i++) {
         const cpm = cpmTable[i];
@@ -871,24 +3121,260 @@
           }
         }
       }
-      ranks.sort((a, b) => b.statProduct - a.statProduct);
+      ranks.sort((a, b) => {
+        if (Math.abs(b.statProduct - a.statProduct) > 1e-6) {
+          return b.statProduct - a.statProduct;
+        }
+        if (b.cp !== a.cp) return b.cp - a.cp;
+        return (b.ivA + b.ivD + b.ivH) - (a.ivA + a.ivD + a.ivH);
+      });
+      for (let i = 0; i < ranks.length; i++) {
+        if (i > 0 && Math.abs(ranks[i].statProduct - ranks[i - 1].statProduct) < 1e-6) {
+          ranks[i].rank = ranks[i - 1].rank;
+        } else {
+          ranks[i].rank = i + 1;
+        }
+      }
       rankingCache[cacheKey] = ranks;
       return ranks;
     }
 
-    function formatLeagueResult(myStat, myRank) {
+    function formatLeagueResult(myStat, myRank, leagueKey) {
       if (!myStat) {
-        return `<div style="text-align:center; color:#888; padding:12px; font-size:14px;">CP制限内の個体がありません</div>`;
+        return `
+          <div class="league-result-content">
+            <div style="text-align:center; color:#888; padding:16px 2px; font-size:11px;">対象外<br><span style="font-size:10px;">(CP超過)</span></div>
+          </div>
+        `;
       }
       const percentile = ((myRank / 4096) * 100).toFixed(1);
       return `
-        <div class="rank-text">${myRank} 位 <span style="font-size:14px; color:#666;">/ 4096</span></div>
-        <p style="text-align:center; margin:0 0 8px 0; color:#555; font-size:13px;">(上位 ${percentile} %)</p>
-        <div class="stat-box">
-          <div>CP: <b>${myStat.cp}</b> <span style="color:#777; font-size:12px;">(Lv ${myStat.level})</span></div>
-          <div>ステータス積: <b>${Math.round(myStat.statProduct).toLocaleString()}</b></div>
+        <div class="league-result-content">
+          <div class="rank-text">${myRank}<span style="font-size:12px; font-weight:normal; margin-left:1px;">位</span></div>
+          <div class="rank-subtext">/ 4096 <span class="rank-pct">(上位 ${percentile}%)</span></div>
+          <div class="stat-box">
+            <div>CP: <b>${myStat.cp}</b> <small style="color:#666;">(Lv${myStat.level})</small></div>
+            <div>積: <b>${Math.round(myStat.statProduct).toLocaleString()}</b></div>
+          </div>
+          <button type="button" class="btn-league-top30" onclick="switchTop30League('${leagueKey}', true)">上位30位 ➔</button>
         </div>
       `;
+    }
+
+    function renderMoveset(pokemonName) {
+      const card = document.getElementById('resultMovesetCard');
+      const fastTd = document.getElementById('movesetFast');
+      const chargedTd = document.getElementById('movesetCharged');
+      const nonLegacySection = document.getElementById('movesetNonLegacySection');
+      const fastNonLegacyTd = document.getElementById('movesetFastNonLegacy');
+      const chargedNonLegacyTd = document.getElementById('movesetChargedNonLegacy');
+      const noLegacyNotice = document.getElementById('movesetNoLegacyNotice');
+      if (!card || !fastTd || !chargedTd) return;
+
+      const moveset = (typeof MOVESETS !== 'undefined') ? MOVESETS[pokemonName] : null;
+      if (!moveset) {
+        card.style.display = 'none';
+        return;
+      }
+
+      function formatMoveRow(move) {
+        const typeInfo = (typeof TYPE_DATA !== 'undefined' && TYPE_DATA[move.type]) 
+          ? TYPE_DATA[move.type] 
+          : { name: '', color: '#888', icon: '' };
+        
+        const legacyBadge = move.legacy ? '<span class="legacy-badge" title="特別な技 (レガシー)">レ</span>' : '';
+        return `
+          <div class="move-row">
+            <span class="type-icon" style="background-color: ${typeInfo.color};" title="${typeInfo.name}">
+              ${typeInfo.icon}
+            </span>
+            <span class="move-name">${move.name}</span>
+            ${legacyBadge}
+          </div>
+        `;
+      }
+
+      fastTd.innerHTML = moveset.fast.map(formatMoveRow).join('');
+      chargedTd.innerHTML = moveset.charged.map(formatMoveRow).join('');
+
+      if (moveset.nonLegacy && nonLegacySection && fastNonLegacyTd && chargedNonLegacyTd) {
+        fastNonLegacyTd.innerHTML = moveset.nonLegacy.fast.map(formatMoveRow).join('');
+        chargedNonLegacyTd.innerHTML = moveset.nonLegacy.charged.map(formatMoveRow).join('');
+        nonLegacySection.style.display = 'block';
+        if (noLegacyNotice) noLegacyNotice.style.display = 'none';
+      } else {
+        if (nonLegacySection) nonLegacySection.style.display = 'none';
+        if (noLegacyNotice) noLegacyNotice.style.display = 'flex';
+      }
+
+      card.style.display = 'block';
+    }
+
+    let isTop30Open = false;
+    let isLeagueTableOpen = false;
+
+    function toggleTop30(forceState) {
+      const content = document.getElementById('top30Content');
+      const icon = document.getElementById('top30ToggleIcon');
+      if (!content) return;
+
+      if (typeof forceState === 'boolean') {
+        isTop30Open = forceState;
+      } else {
+        isTop30Open = !isTop30Open;
+      }
+
+      content.style.display = isTop30Open ? 'block' : 'none';
+      if (icon) {
+        icon.textContent = isTop30Open ? '▲ 閉じる' : '▼ 開く';
+        if (isTop30Open) icon.classList.add('open');
+        else icon.classList.remove('open');
+      }
+    }
+
+    function toggleLeagueTable(forceState) {
+      const content = document.getElementById('leagueTableContent');
+      const icon = document.getElementById('leagueTableToggleIcon');
+      if (!content) return;
+
+      if (typeof forceState === 'boolean') {
+        isLeagueTableOpen = forceState;
+      } else {
+        isLeagueTableOpen = !isLeagueTableOpen;
+      }
+
+      content.style.display = isLeagueTableOpen ? 'block' : 'none';
+      if (icon) {
+        icon.textContent = isLeagueTableOpen ? '▲ 閉じる' : '▼ 開く';
+        if (isLeagueTableOpen) icon.classList.add('open');
+        else icon.classList.remove('open');
+      }
+    }
+
+    let currentTop30League = 'super';
+
+    function switchTop30League(leagueKey, scrollToTable = false) {
+      currentTop30League = leagueKey;
+      
+      const tabSuper = document.getElementById('top30TabSuper');
+      const tabUltra = document.getElementById('top30TabUltra');
+      const tabMaster = document.getElementById('top30TabMaster');
+      
+      if (tabSuper) tabSuper.className = 'top30-tab-btn' + (leagueKey === 'super' ? ' active tab-super' : '');
+      if (tabUltra) tabUltra.className = 'top30-tab-btn' + (leagueKey === 'ultra' ? ' active tab-ultra' : '');
+      if (tabMaster) tabMaster.className = 'top30-tab-btn' + (leagueKey === 'master' ? ' active tab-master' : '');
+
+      const selectedPokemon = document.getElementById('pokemonSelect').value;
+      renderTop30(selectedPokemon, currentTop30League);
+
+      if (scrollToTable) {
+        toggleTop30(true);
+        const el = document.getElementById('top30Container');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function applyIvFromTop30(a, d, h) {
+      document.getElementById('ivAtk').value = a;
+      document.getElementById('ivDef').value = d;
+      document.getElementById('ivHp').value = h;
+      updateGauge('Atk');
+      updateGauge('Def');
+      updateGauge('Hp');
+      checkRank();
+    }
+
+    function renderTop30(pokemonName, leagueKey) {
+      const container = document.getElementById('top30Container');
+      const tbody = document.getElementById('top30TableBody');
+      const banner = document.getElementById('top30CurrentBanner');
+      if (!container || !tbody) return;
+
+      let targetCP = 1500;
+      if (leagueKey === 'ultra') targetCP = 2500;
+      if (leagueKey === 'master') targetCP = 'master';
+
+      const ranks = getRanking(pokemonName, targetCP);
+      if (!ranks || ranks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:16px; color:#888;">このリーグのCP条件に適合する個体がありません</td></tr>';
+        if (banner) banner.style.display = 'none';
+        container.style.display = 'block';
+        return;
+      }
+
+      const curA = parseInt(document.getElementById('ivAtk').value);
+      const curD = parseInt(document.getElementById('ivDef').value);
+      const curH = parseInt(document.getElementById('ivHp').value);
+
+      let myRankInfo = null;
+      for (let i = 0; i < ranks.length; i++) {
+        if (ranks[i].ivA === curA && ranks[i].ivD === curD && ranks[i].ivH === curH) {
+          myRankInfo = ranks[i];
+          break;
+        }
+      }
+
+      if (banner && myRankInfo) {
+        const isTop30 = myRankInfo.rank <= 30;
+        const pct = ((myRankInfo.rank / 4096) * 100).toFixed(1);
+        banner.innerHTML = `
+          <div class="top30-banner-inner ${isTop30 ? 'is-top30' : ''}">
+            <span>📍 <b>現在の個体値</b>: 攻<b>${curA}</b> / 防<b>${curD}</b> / HP<b>${curH}</b></span>
+            <span>➔ <b>${myRankInfo.rank}位</b> / 4096 (上位 ${pct}%) <small>CP ${myRankInfo.cp} (Lv ${myRankInfo.level})</small>${isTop30 ? ' <span class="badge-in-top30">🎉 ランクイン中!</span>' : ''}</span>
+          </div>
+        `;
+        banner.style.display = 'block';
+      } else if (banner) {
+        banner.style.display = 'none';
+      }
+
+      const top30 = ranks.slice(0, 30);
+      const maxStat = ranks[0].statProduct;
+      let html = '';
+
+      for (let i = 0; i < top30.length; i++) {
+        const r = top30[i];
+        const isCurrent = (r.ivA === curA && r.ivD === curD && r.ivH === curH);
+        const ratio = ((r.statProduct / maxStat) * 100).toFixed(2);
+        
+        let rankBadge = `${r.rank}位`;
+        if (r.rank === 1) rankBadge = '<span class="rank-medal gold">🥇 1位</span>';
+        else if (r.rank === 2) rankBadge = '<span class="rank-medal silver">🥈 2位</span>';
+        else if (r.rank === 3) rankBadge = '<span class="rank-medal bronze">🥉 3位</span>';
+
+        html += `
+          <tr class="top30-row ${isCurrent ? 'current-active-row' : ''}" onclick="applyIvFromTop30(${r.ivA}, ${r.ivD}, ${r.ivH})" title="クリックしてこの個体値を反映">
+            <td class="top30-rank-td">${rankBadge}</td>
+            <td class="top30-iv-td">
+              <div class="top30-iv-box">
+                <span class="iv-val-chip">${r.ivA} / ${r.ivD} / ${r.ivH}</span>
+                ${isCurrent ? '<span class="current-tag">現在</span>' : ''}
+              </div>
+            </td>
+            <td class="top30-cp-td">
+              <b>${r.cp}</b> <span class="top30-lv">Lv ${r.level}</span>
+            </td>
+            <td class="top30-stat-td">
+              <div class="stat-num">${Math.round(r.statProduct).toLocaleString()}</div>
+              <div class="stat-pct">${ratio}%</div>
+            </td>
+          </tr>
+        `;
+      }
+
+      tbody.innerHTML = html;
+      container.style.display = 'block';
+
+      const content = document.getElementById('top30Content');
+      if (content) {
+        content.style.display = isTop30Open ? 'block' : 'none';
+      }
+      const icon = document.getElementById('top30ToggleIcon');
+      if (icon) {
+        icon.textContent = isTop30Open ? '▲ 閉じる' : '▼ 開く';
+        if (isTop30Open) icon.classList.add('open');
+        else icon.classList.remove('open');
+      }
     }
 
     function checkRank() {
@@ -901,30 +3387,213 @@
       const resultPokemonName = document.getElementById('resultPokemonName');
       const resultGreat = document.getElementById('resultGreat');
       const resultUltra = document.getElementById('resultUltra');
+      const resultMaster = document.getElementById('resultMaster');
 
-      resultPokemonName.textContent = selectedPokemon;
+      // ポケモン名表示と通常/シャドウ切替ボタン
+      let shadowToggleHtml = '';
+      if (selectedPokemon.startsWith('シャドウ')) {
+        const normalName = selectedPokemon.replace('シャドウ', '');
+        if (typeof POKEDEX !== 'undefined' && POKEDEX[normalName]) {
+          shadowToggleHtml = `<button type="button" class="btn-shadow-toggle" onclick="setPokemon('${normalName}')" title="通常種に切り替えます">⚪ 通常種に切替</button>`;
+        }
+        resultPokemonName.innerHTML = `<span class="badge-form badge-shadow" style="font-size:13px; padding:2px 6px; border-radius:4px; vertical-align:middle; margin-right:6px;">シャドウ</span>${normalName} ${shadowToggleHtml}`;
+      } else {
+        const shadowName = 'シャドウ' + selectedPokemon;
+        if (typeof POKEDEX !== 'undefined' && POKEDEX[shadowName]) {
+          shadowToggleHtml = `<button type="button" class="btn-shadow-toggle" onclick="setPokemon('${shadowName}')" title="シャドウに切り替えます">🔥 シャドウに切替</button>`;
+        }
+        resultPokemonName.innerHTML = `${selectedPokemon} ${shadowToggleHtml}`;
+      }
 
       // スーパーリーグ (CP 1500)
       const ranksGreat = getRanking(selectedPokemon, 1500);
       let rankGreat = -1, statGreat = null;
       for (let i = 0; i < ranksGreat.length; i++) {
         if (ranksGreat[i].ivA === a && ranksGreat[i].ivD === d && ranksGreat[i].ivH === h) {
-          rankGreat = i + 1; statGreat = ranksGreat[i]; break;
+          rankGreat = ranksGreat[i].rank; statGreat = ranksGreat[i]; break;
         }
       }
-      resultGreat.innerHTML = formatLeagueResult(statGreat, rankGreat);
+      resultGreat.innerHTML = formatLeagueResult(statGreat, rankGreat, 'super');
 
       // ハイパーリーグ (CP 2500)
       const ranksUltra = getRanking(selectedPokemon, 2500);
       let rankUltra = -1, statUltra = null;
       for (let i = 0; i < ranksUltra.length; i++) {
         if (ranksUltra[i].ivA === a && ranksUltra[i].ivD === d && ranksUltra[i].ivH === h) {
-          rankUltra = i + 1; statUltra = ranksUltra[i]; break;
+          rankUltra = ranksUltra[i].rank; statUltra = ranksUltra[i]; break;
         }
       }
-      resultUltra.innerHTML = formatLeagueResult(statUltra, rankUltra);
+      resultUltra.innerHTML = formatLeagueResult(statUltra, rankUltra, 'ultra');
 
+      // マスターリーグ (CP 無制限)
+      const ranksMaster = getRanking(selectedPokemon, 'master');
+      let rankMaster = -1, statMaster = null;
+      for (let i = 0; i < ranksMaster.length; i++) {
+        if (ranksMaster[i].ivA === a && ranksMaster[i].ivD === d && ranksMaster[i].ivH === h) {
+          rankMaster = ranksMaster[i].rank; statMaster = ranksMaster[i]; break;
+        }
+      }
+      resultMaster.innerHTML = formatLeagueResult(statMaster, rankMaster, 'master');
+
+      renderMoveset(selectedPokemon);
+      renderTop30(selectedPokemon, currentTop30League);
+      highlightSelectedRow(selectedPokemon);
       resultArea.style.display = 'block';
+    }
+
+    // ==========================================
+    // タイプ別レイドアタッカー上位30位ロジック
+    // ==========================================
+    const RAID_TYPES = [
+      'fire', 'water', 'grass', 'electric', 'ice', 'fighting',
+      'poison', 'ground', 'flying', 'psychic', 'bug', 'rock',
+      'ghost', 'dragon', 'dark', 'steel', 'fairy', 'normal'
+    ];
+
+    let isRaidSectionOpen = false;
+    let currentRaidType = 'fire';
+
+    function initRaidSection() {
+      renderRaidTypeSelector();
+      renderRaidAttackers(currentRaidType);
+    }
+
+    function toggleRaidSection(forceState) {
+      if (typeof forceState === 'boolean') {
+        isRaidSectionOpen = forceState;
+      } else {
+        isRaidSectionOpen = !isRaidSectionOpen;
+      }
+      const content = document.getElementById('raidAttackerContent');
+      const icon = document.getElementById('raidAttackerToggleIcon');
+      if (content) {
+        content.style.display = isRaidSectionOpen ? 'block' : 'none';
+      }
+      if (icon) {
+        icon.textContent = isRaidSectionOpen ? '▲ 閉じる' : '▼ 開く';
+        if (isRaidSectionOpen) icon.classList.add('open');
+        else icon.classList.remove('open');
+      }
+    }
+
+    function switchRaidType(typeKey) {
+      currentRaidType = typeKey;
+      renderRaidTypeSelector();
+      renderRaidAttackers(typeKey);
+    }
+
+    function renderRaidTypeSelector() {
+      const container = document.getElementById('raidTypeSelector');
+      if (!container) return;
+      let html = '';
+      RAID_TYPES.forEach(typeKey => {
+        const info = (typeof TYPE_DATA !== 'undefined' && TYPE_DATA[typeKey])
+          ? TYPE_DATA[typeKey]
+          : { name: typeKey, color: '#888', icon: '' };
+        const isActive = (typeKey === currentRaidType);
+        const activeStyle = isActive
+          ? `background-color:${info.color}; border-color:${info.color}; color:#fff;`
+          : '';
+        const iconBg = isActive ? 'rgba(255,255,255,0.25)' : info.color;
+        html += `
+          <button type="button" class="raid-type-pill ${isActive ? 'active' : ''}" style="${activeStyle}" onclick="switchRaidType('${typeKey}')">
+            <span class="raid-pill-icon" style="background-color:${iconBg};">${info.icon}</span>
+            <span>${info.name}</span>
+          </button>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function renderRaidAttackers(typeKey) {
+      const tbody = document.getElementById('raidAttackerTableBody');
+      const titleSpan = document.getElementById('raidCurrentTypeTitle');
+      const badgeSpan = document.getElementById('raidCurrentTypeBadge');
+      if (!tbody) return;
+
+      const typeInfo = (typeof TYPE_DATA !== 'undefined' && TYPE_DATA[typeKey])
+        ? TYPE_DATA[typeKey]
+        : { name: typeKey, color: '#888', icon: '' };
+
+      if (titleSpan) {
+        titleSpan.innerHTML = `<span>⚔️ ${typeInfo.name}タイプ レイドアタッカー上位30位</span>`;
+      }
+      if (badgeSpan) {
+        badgeSpan.textContent = typeInfo.name;
+        badgeSpan.style.backgroundColor = typeInfo.color;
+      }
+
+      const attackers = (typeof RAID_ATTACKERS !== 'undefined' && RAID_ATTACKERS[typeKey])
+        ? RAID_ATTACKERS[typeKey]
+        : [];
+
+      let html = '';
+      attackers.forEach(item => {
+        let rankClass = '';
+        if (item.rank === 1) rankClass = 'raid-rank-1';
+        else if (item.rank === 2) rankClass = 'raid-rank-2';
+        else if (item.rank === 3) rankClass = 'raid-rank-3';
+
+        let formBadge = '';
+        if (item.badge === 'メガ') {
+          formBadge = '<span class="badge-form badge-mega">メガ</span>';
+        } else if (item.badge === 'ゲンシ') {
+          formBadge = '<span class="badge-form badge-primal">ゲンシ</span>';
+        } else if (item.badge === 'シャドウ') {
+          formBadge = '<span class="badge-form badge-shadow">シャドウ</span>';
+        }
+
+        const fastInfo = (typeof TYPE_DATA !== 'undefined' && TYPE_DATA[item.fast.type])
+          ? TYPE_DATA[item.fast.type]
+          : { name: '', color: '#888', icon: '' };
+        const fastLegacy = item.fast.legacy ? '<span class="legacy-badge" title="特別な技 (レガシー)">レ</span>' : '';
+
+        const chargedInfo = (typeof TYPE_DATA !== 'undefined' && TYPE_DATA[item.charged.type])
+          ? TYPE_DATA[item.charged.type]
+          : { name: '', color: '#888', icon: '' };
+        const chargedLegacy = item.charged.legacy ? '<span class="legacy-badge" title="特別な技 (レガシー)">レ</span>' : '';
+
+        const isSelectable = (typeof POKEDEX !== 'undefined' && POKEDEX[item.name]);
+        const rowClick = isSelectable ? `onclick="onRaidRowClick('${item.name}')" title="${item.name}の個体値をチェック"` : '';
+        const rowClass = 'raid-row' + (isSelectable ? ' clickable' : '');
+
+        html += `
+          <tr class="${rowClass}" ${rowClick}>
+            <td class="raid-rank-col ${rankClass}">${item.rank}</td>
+            <td class="raid-pokemon-col">
+              <div class="raid-pokemon-name-wrap">
+                ${formBadge}<span>${item.name}</span>
+              </div>
+            </td>
+            <td class="raid-move-col">
+              <div class="raid-move-row">
+                <span class="raid-type-icon" style="background-color:${fastInfo.color};" title="${fastInfo.name}">
+                  ${fastInfo.icon}
+                </span>
+                <span class="raid-move-name">${item.fast.name}</span>
+                ${fastLegacy}
+              </div>
+            </td>
+            <td class="raid-move-col">
+              <div class="raid-move-row">
+                <span class="raid-type-icon" style="background-color:${chargedInfo.color};" title="${chargedInfo.name}">
+                  ${chargedInfo.icon}
+                </span>
+                <span class="raid-move-name">${item.charged.name}</span>
+                ${chargedLegacy}
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function onRaidRowClick(pokemonName) {
+      if (typeof POKEDEX !== 'undefined' && POKEDEX[pokemonName]) {
+        selectPokemonFromTable(pokemonName);
+      }
     }
   </script>
 </body>
