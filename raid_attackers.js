@@ -411,7 +411,21 @@ const RAID_ATTACKERS = {
   ],
   "water": [
     {
-      "rank": 1,
+      "name": "メガゲッコウガ",
+      "badge": "メガ",
+      "fast": {
+        "name": "みずしゅりけん",
+        "type": "water"
+      },
+      "charged": {
+        "name": "ハイドロカノン",
+        "type": "water",
+        "legacy": true
+      },
+      "rank": 1
+    },
+    {
+      "rank": 2,
       "name": "ゲンシカイオーガ",
       "badge": "ゲンシ",
       "fast": {
@@ -425,7 +439,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 2,
+      "rank": 3,
       "name": "メガカイオーガ",
       "badge": "メガ",
       "fast": {
@@ -439,7 +453,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 3,
+      "rank": 4,
       "name": "メガラグラージ",
       "badge": "メガ",
       "fast": {
@@ -453,7 +467,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 4,
+      "rank": 5,
       "name": "シャドウカイオーガ",
       "badge": "シャドウ",
       "fast": {
@@ -467,7 +481,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 5,
+      "rank": 6,
       "name": "メガカメックス",
       "badge": "メガ",
       "fast": {
@@ -481,7 +495,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 6,
+      "rank": 7,
       "name": "メガギャラドス",
       "badge": "メガ",
       "fast": {
@@ -494,7 +508,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 7,
+      "rank": 8,
       "name": "シャドウラグラージ",
       "badge": "シャドウ",
       "fast": {
@@ -508,7 +522,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 8,
+      "rank": 9,
       "name": "カイオーガ",
       "badge": "",
       "fast": {
@@ -522,7 +536,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 9,
+      "rank": 10,
       "name": "シャドウオーダイル",
       "badge": "シャドウ",
       "fast": {
@@ -536,7 +550,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 10,
+      "rank": 11,
       "name": "シャドウキングラー",
       "badge": "シャドウ",
       "fast": {
@@ -549,7 +563,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 11,
+      "rank": 12,
       "name": "シャドウギャラドス",
       "badge": "シャドウ",
       "fast": {
@@ -562,7 +576,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 12,
+      "rank": 13,
       "name": "ゲッコウガ",
       "badge": "",
       "fast": {
@@ -576,7 +590,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 13,
+      "rank": 14,
       "name": "アシレーヌ",
       "badge": "",
       "fast": {
@@ -590,7 +604,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 14,
+      "rank": 15,
       "name": "ラグラージ",
       "badge": "",
       "fast": {
@@ -604,7 +618,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 15,
+      "rank": 16,
       "name": "シャドウエンペルト",
       "badge": "シャドウ",
       "fast": {
@@ -618,7 +632,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 16,
+      "rank": 17,
       "name": "キングラー",
       "badge": "",
       "fast": {
@@ -631,7 +645,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 17,
+      "rank": 18,
       "name": "パルキア(オリジン)",
       "badge": "",
       "fast": {
@@ -644,7 +658,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 18,
+      "rank": 19,
       "name": "シャドウカメックス",
       "badge": "シャドウ",
       "fast": {
@@ -658,7 +672,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 19,
+      "rank": 20,
       "name": "パルキア",
       "badge": "",
       "fast": {
@@ -671,7 +685,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 20,
+      "rank": 21,
       "name": "オーダイル",
       "badge": "",
       "fast": {
@@ -685,7 +699,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 21,
+      "rank": 22,
       "name": "エンペルト",
       "badge": "",
       "fast": {
@@ -699,7 +713,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 22,
+      "rank": 23,
       "name": "ダイケンキ",
       "badge": "",
       "fast": {
@@ -713,7 +727,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 23,
+      "rank": 24,
       "name": "ギャラドス",
       "badge": "",
       "fast": {
@@ -726,7 +740,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 24,
+      "rank": 25,
       "name": "ボルケニオン",
       "badge": "",
       "fast": {
@@ -739,7 +753,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 25,
+      "rank": 26,
       "name": "シャドウシャワーズ",
       "badge": "シャドウ",
       "fast": {
@@ -752,7 +766,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 26,
+      "rank": 27,
       "name": "オニシズクモ",
       "badge": "",
       "fast": {
@@ -765,7 +779,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 27,
+      "rank": 28,
       "name": "カメックス",
       "badge": "",
       "fast": {
@@ -779,7 +793,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 28,
+      "rank": 29,
       "name": "スイクン",
       "badge": "",
       "fast": {
@@ -792,21 +806,8 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 29,
-      "name": "シャワーズ",
-      "badge": "",
-      "fast": {
-        "name": "みずでっぽう",
-        "type": "water"
-      },
-      "charged": {
-        "name": "ハイドロポンプ",
-        "type": "water"
-      }
-    },
-    {
       "rank": 30,
-      "name": "ナマズン",
+      "name": "シャワーズ",
       "badge": "",
       "fast": {
         "name": "みずでっぽう",
@@ -820,7 +821,21 @@ const RAID_ATTACKERS = {
   ],
   "grass": [
     {
-      "rank": 1,
+      "name": "メガブリガロン",
+      "badge": "メガ",
+      "fast": {
+        "name": "つるのムチ",
+        "type": "grass"
+      },
+      "charged": {
+        "name": "ハードプラント",
+        "type": "grass",
+        "legacy": true
+      },
+      "rank": 1
+    },
+    {
+      "rank": 2,
       "name": "メガジュカイン",
       "badge": "メガ",
       "fast": {
@@ -834,7 +849,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 2,
+      "rank": 3,
       "name": "カミツルギ",
       "badge": "",
       "fast": {
@@ -847,7 +862,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 3,
+      "rank": 4,
       "name": "メガフシギバナ",
       "badge": "メガ",
       "fast": {
@@ -861,7 +876,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 4,
+      "rank": 5,
       "name": "メガユキノオー",
       "badge": "メガ",
       "fast": {
@@ -874,7 +889,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 5,
+      "rank": 6,
       "name": "シャドウジュカイン",
       "badge": "シャドウ",
       "fast": {
@@ -888,7 +903,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 6,
+      "rank": 7,
       "name": "シャドウフシギバナ",
       "badge": "シャドウ",
       "fast": {
@@ -902,7 +917,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 7,
+      "rank": 8,
       "name": "シャドウタングロース",
       "badge": "シャドウ",
       "fast": {
@@ -915,7 +930,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 8,
+      "rank": 9,
       "name": "カプ・ブルル",
       "badge": "",
       "fast": {
@@ -928,7 +943,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 9,
+      "rank": 10,
       "name": "シェイミ(スカイ)",
       "badge": "",
       "fast": {
@@ -941,7 +956,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 10,
+      "rank": 11,
       "name": "シャドウメガニウム",
       "badge": "シャドウ",
       "fast": {
@@ -955,7 +970,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 11,
+      "rank": 12,
       "name": "シャドウロズレイド",
       "badge": "シャドウ",
       "fast": {
@@ -968,7 +983,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 12,
+      "rank": 13,
       "name": "シャドウダーテング",
       "badge": "シャドウ",
       "fast": {
@@ -981,7 +996,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 13,
+      "rank": 14,
       "name": "ジュカイン",
       "badge": "",
       "fast": {
@@ -995,7 +1010,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 14,
+      "rank": 15,
       "name": "ロズレイド",
       "badge": "",
       "fast": {
@@ -1008,7 +1023,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 15,
+      "rank": 16,
       "name": "フシギバナ",
       "badge": "",
       "fast": {
@@ -1022,7 +1037,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 16,
+      "rank": 17,
       "name": "ブリガロン",
       "badge": "",
       "fast": {
@@ -1036,7 +1051,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 17,
+      "rank": 18,
       "name": "ゴリランダー",
       "badge": "",
       "fast": {
@@ -1050,7 +1065,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 18,
+      "rank": 19,
       "name": "マスカーニャ",
       "badge": "",
       "fast": {
@@ -1063,7 +1078,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 19,
+      "rank": 20,
       "name": "ジュナイパー",
       "badge": "",
       "fast": {
@@ -1077,7 +1092,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 20,
+      "rank": 21,
       "name": "タングロース",
       "badge": "",
       "fast": {
@@ -1090,7 +1105,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 21,
+      "rank": 22,
       "name": "シャドウナッシー",
       "badge": "シャドウ",
       "fast": {
@@ -1103,7 +1118,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 22,
+      "rank": 23,
       "name": "アローラナッシー",
       "badge": "",
       "fast": {
@@ -1116,7 +1131,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 23,
+      "rank": 24,
       "name": "ビリジオン",
       "badge": "",
       "fast": {
@@ -1129,7 +1144,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 24,
+      "rank": 25,
       "name": "キノガッサ",
       "badge": "",
       "fast": {
@@ -1142,7 +1157,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 25,
+      "rank": 26,
       "name": "ドダイトス",
       "badge": "",
       "fast": {
@@ -1156,7 +1171,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 26,
+      "rank": 27,
       "name": "リーフィア",
       "badge": "",
       "fast": {
@@ -1169,7 +1184,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 27,
+      "rank": 28,
       "name": "メガニウム",
       "badge": "",
       "fast": {
@@ -1183,7 +1198,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 28,
+      "rank": 29,
       "name": "オーロット",
       "badge": "",
       "fast": {
@@ -1196,7 +1211,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 29,
+      "rank": 30,
       "name": "ラランテス",
       "badge": "",
       "fast": {
@@ -1207,24 +1222,37 @@ const RAID_ATTACKERS = {
         "name": "ソーラーブレード",
         "type": "grass"
       }
-    },
-    {
-      "rank": 30,
-      "name": "ハハコモリ",
-      "badge": "",
-      "fast": {
-        "name": "はっぱカッター",
-        "type": "grass"
-      },
-      "charged": {
-        "name": "リーフブレード",
-        "type": "grass"
-      }
     }
   ],
   "electric": [
     {
-      "rank": 1,
+      "name": "メガライチュウX",
+      "badge": "メガ",
+      "fast": {
+        "name": "スパーク",
+        "type": "electric"
+      },
+      "charged": {
+        "name": "ワイルドボルト",
+        "type": "electric"
+      },
+      "rank": 1
+    },
+    {
+      "name": "メガライチュウY",
+      "badge": "メガ",
+      "fast": {
+        "name": "ボルトチェンジ",
+        "type": "electric"
+      },
+      "charged": {
+        "name": "ワイルドボルト",
+        "type": "electric"
+      },
+      "rank": 2
+    },
+    {
+      "rank": 3,
       "name": "メガライボルト",
       "badge": "メガ",
       "fast": {
@@ -1237,7 +1265,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 2,
+      "rank": 4,
       "name": "メガデンリュウ",
       "badge": "メガ",
       "fast": {
@@ -1250,7 +1278,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 3,
+      "rank": 5,
       "name": "デンジュモク",
       "badge": "",
       "fast": {
@@ -1263,7 +1291,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 4,
+      "rank": 6,
       "name": "シャドウライコウ",
       "badge": "シャドウ",
       "fast": {
@@ -1276,7 +1304,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 5,
+      "rank": 7,
       "name": "シャドウジバコイル",
       "badge": "シャドウ",
       "fast": {
@@ -1289,7 +1317,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 6,
+      "rank": 8,
       "name": "ゼクロム",
       "badge": "",
       "fast": {
@@ -1303,7 +1331,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 7,
+      "rank": 9,
       "name": "シャドウサンダー",
       "badge": "シャドウ",
       "fast": {
@@ -1317,7 +1345,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 8,
+      "rank": 10,
       "name": "シャドウエレキブル",
       "badge": "シャドウ",
       "fast": {
@@ -1330,7 +1358,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 9,
+      "rank": 11,
       "name": "シャドウレントラー",
       "badge": "シャドウ",
       "fast": {
@@ -1343,7 +1371,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 10,
+      "rank": 12,
       "name": "レジエレキ",
       "badge": "",
       "fast": {
@@ -1356,7 +1384,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 11,
+      "rank": 13,
       "name": "ライコウ",
       "badge": "",
       "fast": {
@@ -1369,7 +1397,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 12,
+      "rank": 14,
       "name": "ジバコイル",
       "badge": "",
       "fast": {
@@ -1382,7 +1410,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 13,
+      "rank": 15,
       "name": "ボルトロス(霊獣)",
       "badge": "",
       "fast": {
@@ -1395,7 +1423,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 14,
+      "rank": 16,
       "name": "エレキブル",
       "badge": "",
       "fast": {
@@ -1408,7 +1436,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 15,
+      "rank": 17,
       "name": "サンダー",
       "badge": "",
       "fast": {
@@ -1422,7 +1450,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 16,
+      "rank": 18,
       "name": "ゼラオラ",
       "badge": "",
       "fast": {
@@ -1435,7 +1463,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 17,
+      "rank": 19,
       "name": "カプ・コケコ",
       "badge": "",
       "fast": {
@@ -1448,7 +1476,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 18,
+      "rank": 20,
       "name": "シャドウサンダース",
       "badge": "シャドウ",
       "fast": {
@@ -1461,7 +1489,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 19,
+      "rank": 21,
       "name": "クワガノン",
       "badge": "",
       "fast": {
@@ -1474,7 +1502,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 20,
+      "rank": 22,
       "name": "レントラー",
       "badge": "",
       "fast": {
@@ -1487,7 +1515,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 21,
+      "rank": 23,
       "name": "アローラゴローニャ",
       "badge": "",
       "fast": {
@@ -1500,7 +1528,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 22,
+      "rank": 24,
       "name": "ハラバリー",
       "badge": "",
       "fast": {
@@ -1513,7 +1541,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 23,
+      "rank": 25,
       "name": "デンリュウ",
       "badge": "",
       "fast": {
@@ -1526,7 +1554,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 24,
+      "rank": 26,
       "name": "ランターン",
       "badge": "",
       "fast": {
@@ -1539,7 +1567,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 25,
+      "rank": 27,
       "name": "サンダース",
       "badge": "",
       "fast": {
@@ -1552,7 +1580,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 26,
+      "rank": 28,
       "name": "エモンガ",
       "badge": "",
       "fast": {
@@ -1565,7 +1593,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 27,
+      "rank": 29,
       "name": "ピカチュウ",
       "badge": "",
       "fast": {
@@ -1578,7 +1606,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 28,
+      "rank": 30,
       "name": "ライボルト",
       "badge": "",
       "fast": {
@@ -1587,32 +1615,6 @@ const RAID_ATTACKERS = {
       },
       "charged": {
         "name": "ワイルドボルト",
-        "type": "electric"
-      }
-    },
-    {
-      "rank": 29,
-      "name": "パチリス",
-      "badge": "",
-      "fast": {
-        "name": "ボルトチェンジ",
-        "type": "electric"
-      },
-      "charged": {
-        "name": "かみなりパンチ",
-        "type": "electric"
-      }
-    },
-    {
-      "rank": 30,
-      "name": "マルマイン",
-      "badge": "",
-      "fast": {
-        "name": "ボルトチェンジ",
-        "type": "electric"
-      },
-      "charged": {
-        "name": "ほうでん",
         "type": "electric"
       }
     }
@@ -2020,7 +2022,20 @@ const RAID_ATTACKERS = {
   ],
   "fighting": [
     {
-      "rank": 1,
+      "name": "メガブリガロン",
+      "badge": "メガ",
+      "fast": {
+        "name": "けたぐり",
+        "type": "fighting"
+      },
+      "charged": {
+        "name": "ばかぢから",
+        "type": "fighting"
+      },
+      "rank": 1
+    },
+    {
+      "rank": 2,
       "name": "メガルカリオ",
       "badge": "メガ",
       "fast": {
@@ -2034,7 +2049,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 2,
+      "rank": 3,
       "name": "メガバシャーモ",
       "badge": "メガ",
       "fast": {
@@ -2047,7 +2062,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 3,
+      "rank": 4,
       "name": "メガヘラクロス",
       "badge": "メガ",
       "fast": {
@@ -2060,7 +2075,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 4,
+      "rank": 5,
       "name": "メガチャーレム",
       "badge": "メガ",
       "fast": {
@@ -2073,7 +2088,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 5,
+      "rank": 6,
       "name": "テラキオン",
       "badge": "",
       "fast": {
@@ -2087,7 +2102,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 6,
+      "rank": 7,
       "name": "シャドウカイリキー",
       "badge": "シャドウ",
       "fast": {
@@ -2100,7 +2115,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 7,
+      "rank": 8,
       "name": "シャドウハリテヤマ",
       "badge": "シャドウ",
       "fast": {
@@ -2113,7 +2128,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 8,
+      "rank": 9,
       "name": "ケルディオ(覚悟)",
       "badge": "",
       "fast": {
@@ -2126,7 +2141,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 9,
+      "rank": 10,
       "name": "ルカリオ",
       "badge": "",
       "fast": {
@@ -2140,7 +2155,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 10,
+      "rank": 11,
       "name": "シャドウルカリオ",
       "badge": "シャドウ",
       "fast": {
@@ -2153,7 +2168,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 11,
+      "rank": 12,
       "name": "シャドウローブシン",
       "badge": "シャドウ",
       "fast": {
@@ -2166,7 +2181,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 12,
+      "rank": 13,
       "name": "ローブシン",
       "badge": "",
       "fast": {
@@ -2179,7 +2194,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 13,
+      "rank": 14,
       "name": "カイリキー",
       "badge": "",
       "fast": {
@@ -2192,7 +2207,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 14,
+      "rank": 15,
       "name": "コノヨザル",
       "badge": "",
       "fast": {
@@ -2205,7 +2220,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 15,
+      "rank": 16,
       "name": "ハリテヤマ",
       "badge": "",
       "fast": {
@@ -2218,7 +2233,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 16,
+      "rank": 17,
       "name": "キノガッサ",
       "badge": "",
       "fast": {
@@ -2231,7 +2246,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 17,
+      "rank": 18,
       "name": "ビリジオン",
       "badge": "",
       "fast": {
@@ -2245,7 +2260,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 18,
+      "rank": 19,
       "name": "シャドウオコリザル",
       "badge": "シャドウ",
       "fast": {
@@ -2258,7 +2273,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 19,
+      "rank": 20,
       "name": "ザマゼンタ",
       "badge": "",
       "fast": {
@@ -2271,7 +2286,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 20,
+      "rank": 21,
       "name": "マッシブーン",
       "badge": "",
       "fast": {
@@ -2284,7 +2299,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 21,
+      "rank": 22,
       "name": "フェローチェ",
       "badge": "",
       "fast": {
@@ -2297,7 +2312,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 22,
+      "rank": 23,
       "name": "ドクロッグ",
       "badge": "",
       "fast": {
@@ -2310,7 +2325,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 23,
+      "rank": 24,
       "name": "バシャーモ",
       "badge": "",
       "fast": {
@@ -2323,7 +2338,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 24,
+      "rank": 25,
       "name": "ヘラクロス",
       "badge": "",
       "fast": {
@@ -2336,7 +2351,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 25,
+      "rank": 26,
       "name": "コバルオン",
       "badge": "",
       "fast": {
@@ -2350,7 +2365,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 26,
+      "rank": 27,
       "name": "エルレイド",
       "badge": "",
       "fast": {
@@ -2363,7 +2378,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 27,
+      "rank": 28,
       "name": "ニョロボン",
       "badge": "",
       "fast": {
@@ -2377,7 +2392,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 28,
+      "rank": 29,
       "name": "オコリザル",
       "badge": "",
       "fast": {
@@ -2390,24 +2405,11 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 29,
+      "rank": 30,
       "name": "カポエラー",
       "badge": "",
       "fast": {
         "name": "カウンター",
-        "type": "fighting"
-      },
-      "charged": {
-        "name": "インファイト",
-        "type": "fighting"
-      }
-    },
-    {
-      "rank": 30,
-      "name": "サワムラー",
-      "badge": "",
-      "fast": {
-        "name": "けたぐり",
         "type": "fighting"
       },
       "charged": {
@@ -3614,7 +3616,20 @@ const RAID_ATTACKERS = {
   ],
   "dragon": [
     {
-      "rank": 1,
+      "name": "メガカイリュー",
+      "badge": "メガ",
+      "fast": {
+        "name": "ドラゴンテール",
+        "type": "dragon"
+      },
+      "charged": {
+        "name": "げきりん",
+        "type": "dragon"
+      },
+      "rank": 1
+    },
+    {
+      "rank": 2,
       "name": "メガレックウザ",
       "badge": "メガ",
       "fast": {
@@ -3628,7 +3643,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 2,
+      "rank": 3,
       "name": "メガガブリアス",
       "badge": "メガ",
       "fast": {
@@ -3641,7 +3656,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 3,
+      "rank": 4,
       "name": "メガボーマンダ",
       "badge": "メガ",
       "fast": {
@@ -3655,7 +3670,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 4,
+      "rank": 5,
       "name": "パルキア(オリジン)",
       "badge": "",
       "fast": {
@@ -3669,7 +3684,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 5,
+      "rank": 6,
       "name": "ディアルガ(オリジン)",
       "badge": "",
       "fast": {
@@ -3683,7 +3698,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 6,
+      "rank": 7,
       "name": "ムゲンダイナ",
       "badge": "",
       "fast": {
@@ -3696,7 +3711,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 7,
+      "rank": 8,
       "name": "シャドウボーマンダ",
       "badge": "シャドウ",
       "fast": {
@@ -3710,7 +3725,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 8,
+      "rank": 9,
       "name": "シャドウカイリュー",
       "badge": "シャドウ",
       "fast": {
@@ -3723,7 +3738,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 9,
+      "rank": 10,
       "name": "シャドウガブリアス",
       "badge": "シャドウ",
       "fast": {
@@ -3736,7 +3751,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 10,
+      "rank": 11,
       "name": "レックウザ",
       "badge": "",
       "fast": {
@@ -3749,7 +3764,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 11,
+      "rank": 12,
       "name": "パルキア",
       "badge": "",
       "fast": {
@@ -3762,7 +3777,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 12,
+      "rank": 13,
       "name": "ディアルガ",
       "badge": "",
       "fast": {
@@ -3775,7 +3790,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 13,
+      "rank": 14,
       "name": "ゼクロム",
       "badge": "",
       "fast": {
@@ -3788,7 +3803,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 14,
+      "rank": 15,
       "name": "レシラム",
       "badge": "",
       "fast": {
@@ -3801,7 +3816,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 15,
+      "rank": 16,
       "name": "ボーマンダ",
       "badge": "",
       "fast": {
@@ -3815,7 +3830,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 16,
+      "rank": 17,
       "name": "カイリュー",
       "badge": "",
       "fast": {
@@ -3828,7 +3843,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 17,
+      "rank": 18,
       "name": "ガブリアス",
       "badge": "",
       "fast": {
@@ -3841,7 +3856,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 18,
+      "rank": 19,
       "name": "セグレイブ",
       "badge": "",
       "fast": {
@@ -3854,7 +3869,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 19,
+      "rank": 20,
       "name": "キュレム(ホワイト)",
       "badge": "",
       "fast": {
@@ -3867,7 +3882,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 20,
+      "rank": 21,
       "name": "キュレム(ブラック)",
       "badge": "",
       "fast": {
@@ -3880,7 +3895,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 21,
+      "rank": 22,
       "name": "シャドウラティオス",
       "badge": "シャドウ",
       "fast": {
@@ -3893,7 +3908,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 22,
+      "rank": 23,
       "name": "メガラティオス",
       "badge": "メガ",
       "fast": {
@@ -3906,7 +3921,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 23,
+      "rank": 24,
       "name": "メガラティアス",
       "badge": "メガ",
       "fast": {
@@ -3919,7 +3934,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 24,
+      "rank": 25,
       "name": "サザンドラ",
       "badge": "",
       "fast": {
@@ -3932,7 +3947,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 25,
+      "rank": 26,
       "name": "オノノクス",
       "badge": "",
       "fast": {
@@ -3946,7 +3961,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 26,
+      "rank": 27,
       "name": "ギラティナ(オリジン)",
       "badge": "",
       "fast": {
@@ -3959,7 +3974,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 27,
+      "rank": 28,
       "name": "ラティオス",
       "badge": "",
       "fast": {
@@ -3972,7 +3987,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 28,
+      "rank": 29,
       "name": "ジャラランガ",
       "badge": "",
       "fast": {
@@ -3985,7 +4000,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 29,
+      "rank": 30,
       "name": "ドラパルト",
       "badge": "",
       "fast": {
@@ -3994,19 +4009,6 @@ const RAID_ATTACKERS = {
       },
       "charged": {
         "name": "げきりん",
-        "type": "dragon"
-      }
-    },
-    {
-      "rank": 30,
-      "name": "チルタリス",
-      "badge": "",
-      "fast": {
-        "name": "りゅうのいぶき",
-        "type": "dragon"
-      },
-      "charged": {
-        "name": "りゅうのはどう",
         "type": "dragon"
       }
     }
@@ -4407,7 +4409,20 @@ const RAID_ATTACKERS = {
   ],
   "dark": [
     {
-      "rank": 1,
+      "name": "メガゲッコウガ",
+      "badge": "メガ",
+      "fast": {
+        "name": "だましうち",
+        "type": "dark"
+      },
+      "charged": {
+        "name": "つじぎり",
+        "type": "dark"
+      },
+      "rank": 1
+    },
+    {
+      "rank": 2,
       "name": "メガバンギラス",
       "badge": "メガ",
       "fast": {
@@ -4420,7 +4435,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 2,
+      "rank": 3,
       "name": "メガヘルガー",
       "badge": "メガ",
       "fast": {
@@ -4433,7 +4448,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 3,
+      "rank": 4,
       "name": "メガギャラドス",
       "badge": "メガ",
       "fast": {
@@ -4446,7 +4461,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 4,
+      "rank": 5,
       "name": "シャドウバンギラス",
       "badge": "シャドウ",
       "fast": {
@@ -4459,7 +4474,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 5,
+      "rank": 6,
       "name": "サザンドラ",
       "badge": "",
       "fast": {
@@ -4473,7 +4488,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 6,
+      "rank": 7,
       "name": "ダークライ",
       "badge": "",
       "fast": {
@@ -4486,7 +4501,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 7,
+      "rank": 8,
       "name": "シャドウマニューラ",
       "badge": "シャドウ",
       "fast": {
@@ -4499,7 +4514,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 8,
+      "rank": 9,
       "name": "イベルタル",
       "badge": "",
       "fast": {
@@ -4512,7 +4527,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 9,
+      "rank": 10,
       "name": "バンギラス",
       "badge": "",
       "fast": {
@@ -4525,7 +4540,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 10,
+      "rank": 11,
       "name": "シャドウサザンドラ",
       "badge": "シャドウ",
       "fast": {
@@ -4539,7 +4554,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 11,
+      "rank": 12,
       "name": "シャドウヘルガー",
       "badge": "シャドウ",
       "fast": {
@@ -4552,7 +4567,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 12,
+      "rank": 13,
       "name": "シャドウアブソル",
       "badge": "シャドウ",
       "fast": {
@@ -4565,7 +4580,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 13,
+      "rank": 14,
       "name": "ガラルファイヤー",
       "badge": "",
       "fast": {
@@ -4578,7 +4593,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 14,
+      "rank": 15,
       "name": "マニューラ",
       "badge": "",
       "fast": {
@@ -4591,7 +4606,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 15,
+      "rank": 16,
       "name": "フーパ(解放)",
       "badge": "",
       "fast": {
@@ -4604,7 +4619,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 16,
+      "rank": 17,
       "name": "アクジキング",
       "badge": "",
       "fast": {
@@ -4617,7 +4632,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 17,
+      "rank": 18,
       "name": "ゲッコウガ",
       "badge": "",
       "fast": {
@@ -4630,7 +4645,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 18,
+      "rank": 19,
       "name": "ドンカラス",
       "badge": "",
       "fast": {
@@ -4643,7 +4658,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 19,
+      "rank": 20,
       "name": "シャドウダーテング",
       "badge": "シャドウ",
       "fast": {
@@ -4656,7 +4671,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 20,
+      "rank": 21,
       "name": "ブラッキー",
       "badge": "",
       "fast": {
@@ -4669,7 +4684,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 21,
+      "rank": 22,
       "name": "オーダイル",
       "badge": "",
       "fast": {
@@ -4682,7 +4697,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 22,
+      "rank": 23,
       "name": "バルジーナ",
       "badge": "",
       "fast": {
@@ -4695,7 +4710,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 23,
+      "rank": 24,
       "name": "アブソル",
       "badge": "",
       "fast": {
@@ -4708,7 +4723,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 24,
+      "rank": 25,
       "name": "ヘルガー",
       "badge": "",
       "fast": {
@@ -4721,7 +4736,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 25,
+      "rank": 26,
       "name": "サメハダー",
       "badge": "",
       "fast": {
@@ -4734,7 +4749,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 26,
+      "rank": 27,
       "name": "スカタンク",
       "badge": "",
       "fast": {
@@ -4747,7 +4762,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 27,
+      "rank": 28,
       "name": "ゾロアーク",
       "badge": "",
       "fast": {
@@ -4760,7 +4775,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 28,
+      "rank": 29,
       "name": "マフィティフ",
       "badge": "",
       "fast": {
@@ -4773,7 +4788,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 29,
+      "rank": 30,
       "name": "ドラピオン",
       "badge": "",
       "fast": {
@@ -4782,19 +4797,6 @@ const RAID_ATTACKERS = {
       },
       "charged": {
         "name": "かみくだく",
-        "type": "dark"
-      }
-    },
-    {
-      "rank": 30,
-      "name": "カラマネロ",
-      "badge": "",
-      "fast": {
-        "name": "サイコカッター",
-        "type": "psychic"
-      },
-      "charged": {
-        "name": "イカサマ",
         "type": "dark"
       }
     }
@@ -5594,7 +5596,33 @@ const RAID_ATTACKERS = {
   ],
   "flying": [
     {
-      "rank": 1,
+      "name": "メガカイリュー",
+      "badge": "メガ",
+      "fast": {
+        "name": "ドラゴンテール",
+        "type": "dragon"
+      },
+      "charged": {
+        "name": "ぼうふう",
+        "type": "flying"
+      },
+      "rank": 1
+    },
+    {
+      "name": "メガムクホーク",
+      "badge": "メガ",
+      "fast": {
+        "name": "かぜおこし",
+        "type": "flying"
+      },
+      "charged": {
+        "name": "ブレイブバード",
+        "type": "flying"
+      },
+      "rank": 2
+    },
+    {
+      "rank": 3,
       "name": "メガレックウザ",
       "badge": "メガ",
       "fast": {
@@ -5608,7 +5636,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 2,
+      "rank": 4,
       "name": "レックウザ",
       "badge": "",
       "fast": {
@@ -5622,7 +5650,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 3,
+      "rank": 5,
       "name": "メガピジョット",
       "badge": "メガ",
       "fast": {
@@ -5636,7 +5664,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 4,
+      "rank": 6,
       "name": "シャドウファイヤー",
       "badge": "シャドウ",
       "fast": {
@@ -5650,7 +5678,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 5,
+      "rank": 7,
       "name": "イベルタル",
       "badge": "",
       "fast": {
@@ -5664,7 +5692,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 6,
+      "rank": 8,
       "name": "シャドウドンカラス",
       "badge": "シャドウ",
       "fast": {
@@ -5677,7 +5705,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 7,
+      "rank": 9,
       "name": "ファイヤー",
       "badge": "",
       "fast": {
@@ -5691,7 +5719,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 8,
+      "rank": 10,
       "name": "トルネロス(霊獣)",
       "badge": "",
       "fast": {
@@ -5705,7 +5733,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 9,
+      "rank": 11,
       "name": "シャドウカイリュー",
       "badge": "シャドウ",
       "fast": {
@@ -5718,7 +5746,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 10,
+      "rank": 12,
       "name": "シャドウトゲキッス",
       "badge": "シャドウ",
       "fast": {
@@ -5731,7 +5759,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 11,
+      "rank": 13,
       "name": "ドンカラス",
       "badge": "",
       "fast": {
@@ -5744,7 +5772,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 12,
+      "rank": 14,
       "name": "シャドウウォーグル",
       "badge": "シャドウ",
       "fast": {
@@ -5757,7 +5785,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 13,
+      "rank": 15,
       "name": "ウォーグル",
       "badge": "",
       "fast": {
@@ -5770,7 +5798,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 14,
+      "rank": 16,
       "name": "シャドウピジョット",
       "badge": "シャドウ",
       "fast": {
@@ -5784,7 +5812,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 15,
+      "rank": 17,
       "name": "ファイアロー",
       "badge": "",
       "fast": {
@@ -5797,7 +5825,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 16,
+      "rank": 18,
       "name": "アーマーガア",
       "badge": "",
       "fast": {
@@ -5810,7 +5838,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 17,
+      "rank": 19,
       "name": "トゲキッス",
       "badge": "",
       "fast": {
@@ -5823,7 +5851,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 18,
+      "rank": 20,
       "name": "ルギア",
       "badge": "",
       "fast": {
@@ -5837,7 +5865,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 19,
+      "rank": 21,
       "name": "シャドウスタープター",
       "badge": "シャドウ",
       "fast": {
@@ -5850,7 +5878,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 20,
+      "rank": 22,
       "name": "スタープター",
       "badge": "",
       "fast": {
@@ -5863,7 +5891,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 21,
+      "rank": 23,
       "name": "サンダー",
       "badge": "",
       "fast": {
@@ -5876,7 +5904,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 22,
+      "rank": 24,
       "name": "ホウオウ",
       "badge": "",
       "fast": {
@@ -5889,7 +5917,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 23,
+      "rank": 25,
       "name": "ピジョット",
       "badge": "",
       "fast": {
@@ -5903,7 +5931,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 24,
+      "rank": 26,
       "name": "トルネロス(化身)",
       "badge": "",
       "fast": {
@@ -5916,7 +5944,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 25,
+      "rank": 27,
       "name": "シャドウスワロー",
       "badge": "シャドウ",
       "fast": {
@@ -5929,7 +5957,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 26,
+      "rank": 28,
       "name": "スワロー",
       "badge": "",
       "fast": {
@@ -5942,7 +5970,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 27,
+      "rank": 29,
       "name": "エアームド",
       "badge": "",
       "fast": {
@@ -5955,7 +5983,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 28,
+      "rank": 30,
       "name": "チルタリス",
       "badge": "",
       "fast": {
@@ -5964,32 +5992,6 @@ const RAID_ATTACKERS = {
       },
       "charged": {
         "name": "ゴッドバード",
-        "type": "flying"
-      }
-    },
-    {
-      "rank": 29,
-      "name": "エンペルト",
-      "badge": "",
-      "fast": {
-        "name": "きんぞくおん",
-        "type": "steel"
-      },
-      "charged": {
-        "name": "ドリルくちばし",
-        "type": "flying"
-      }
-    },
-    {
-      "rank": 30,
-      "name": "オオスバメ",
-      "badge": "",
-      "fast": {
-        "name": "つばさでうつ",
-        "type": "flying"
-      },
-      "charged": {
-        "name": "ブレイブバード",
         "type": "flying"
       }
     }
@@ -6780,7 +6782,20 @@ const RAID_ATTACKERS = {
   ],
   "normal": [
     {
-      "rank": 1,
+      "name": "メガムクホーク",
+      "badge": "メガ",
+      "fast": {
+        "name": "でんこうせっか",
+        "type": "normal"
+      },
+      "charged": {
+        "name": "おんがえし",
+        "type": "normal"
+      },
+      "rank": 1
+    },
+    {
+      "rank": 2,
       "name": "メガガルーラ",
       "badge": "メガ",
       "fast": {
@@ -6794,7 +6809,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 2,
+      "rank": 3,
       "name": "メガピジョット",
       "badge": "メガ",
       "fast": {
@@ -6807,7 +6822,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 3,
+      "rank": 4,
       "name": "レジギガス",
       "badge": "",
       "fast": {
@@ -6821,7 +6836,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 4,
+      "rank": 5,
       "name": "ポリゴンZ",
       "badge": "",
       "fast": {
@@ -6835,7 +6850,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 5,
+      "rank": 6,
       "name": "カビゴン",
       "badge": "",
       "fast": {
@@ -6848,7 +6863,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 6,
+      "rank": 7,
       "name": "シャドウケッキング",
       "badge": "シャドウ",
       "fast": {
@@ -6861,7 +6876,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 7,
+      "rank": 8,
       "name": "ケッキング",
       "badge": "",
       "fast": {
@@ -6874,7 +6889,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 8,
+      "rank": 9,
       "name": "ハピナス",
       "badge": "",
       "fast": {
@@ -6887,7 +6902,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 9,
+      "rank": 10,
       "name": "ラッキー",
       "badge": "",
       "fast": {
@@ -6900,7 +6915,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 10,
+      "rank": 11,
       "name": "シャドウカビゴン",
       "badge": "シャドウ",
       "fast": {
@@ -6913,7 +6928,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 11,
+      "rank": 12,
       "name": "ベロベルト",
       "badge": "",
       "fast": {
@@ -6926,7 +6941,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 12,
+      "rank": 13,
       "name": "シャドウポリゴンZ",
       "badge": "シャドウ",
       "fast": {
@@ -6939,7 +6954,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 13,
+      "rank": 14,
       "name": "シャドウガルーラ",
       "badge": "シャドウ",
       "fast": {
@@ -6952,7 +6967,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 14,
+      "rank": 15,
       "name": "ガルーラ",
       "badge": "",
       "fast": {
@@ -6965,7 +6980,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 15,
+      "rank": 16,
       "name": "バッフロン",
       "badge": "",
       "fast": {
@@ -6978,7 +6993,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 16,
+      "rank": 17,
       "name": "ムクホーク",
       "badge": "",
       "fast": {
@@ -6991,7 +7006,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 17,
+      "rank": 18,
       "name": "オオタチ",
       "badge": "",
       "fast": {
@@ -7004,7 +7019,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 18,
+      "rank": 19,
       "name": "ケンタロス",
       "badge": "",
       "fast": {
@@ -7017,7 +7032,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 19,
+      "rank": 20,
       "name": "ミルタンク",
       "badge": "",
       "fast": {
@@ -7030,7 +7045,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 20,
+      "rank": 21,
       "name": "ドゴーム",
       "badge": "",
       "fast": {
@@ -7043,7 +7058,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 21,
+      "rank": 22,
       "name": "バクオング",
       "badge": "",
       "fast": {
@@ -7056,7 +7071,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 22,
+      "rank": 23,
       "name": "ヤルキモノ",
       "badge": "",
       "fast": {
@@ -7069,7 +7084,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 23,
+      "rank": 24,
       "name": "チラーミィ",
       "badge": "",
       "fast": {
@@ -7082,7 +7097,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 24,
+      "rank": 25,
       "name": "チラチーノ",
       "badge": "",
       "fast": {
@@ -7095,7 +7110,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 25,
+      "rank": 26,
       "name": "キテルグマ",
       "badge": "",
       "fast": {
@@ -7108,7 +7123,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 26,
+      "rank": 27,
       "name": "ビッパ",
       "badge": "",
       "fast": {
@@ -7121,7 +7136,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 27,
+      "rank": 28,
       "name": "ビーダル",
       "badge": "",
       "fast": {
@@ -7134,7 +7149,7 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 28,
+      "rank": 29,
       "name": "エテボース",
       "badge": "",
       "fast": {
@@ -7147,24 +7162,11 @@ const RAID_ATTACKERS = {
       }
     },
     {
-      "rank": 29,
+      "rank": 30,
       "name": "プクリン",
       "badge": "",
       "fast": {
         "name": "はたく",
-        "type": "normal"
-      },
-      "charged": {
-        "name": "はかいこうせん",
-        "type": "normal"
-      }
-    },
-    {
-      "rank": 30,
-      "name": "ラッタ",
-      "badge": "",
-      "fast": {
-        "name": "でんこうせっか",
         "type": "normal"
       },
       "charged": {
