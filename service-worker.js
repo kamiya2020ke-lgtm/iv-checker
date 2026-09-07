@@ -1,4 +1,4 @@
-const CACHE_NAME = 'iv-checker-v32';
+const CACHE_NAME = 'iv-checker-v34';
 const urlsToCache = [
   './',
   './index.html',
